@@ -2,9 +2,9 @@
    역할 3개: student(암호 없음) / teacher(담임 암호) / admin(교장 암호)
    ── 학교에서 아래 두 암호를 바꿔 쓰세요 ── */
 window.ROLES = (function(){
-  const TEACHER_PW = "1234";  // 담임 암호
-  const ADMIN_PW   = "1234";    // 교장 암호
-  const PARENT_PW  = "1234";     // 학부모 공유 암호(가정통신문으로 안내)
+  const TEACHER_PW = "maehwa-teacher";  // 담임 암호
+  const ADMIN_PW   = "maehwa-admin";    // 교장 암호
+  const PARENT_PW  = "maehwa-home";     // 학부모 공유 암호(가정통신문으로 안내)
 
   // 화면별 필요 권한
   const NEED = {
@@ -14,7 +14,7 @@ window.ROLES = (function(){
     "home.html":"student","hub.html":"student","gate.html":"student",
     "budget.html":"student","board.html":"student","kidsmeeting.html":"student",
     "bookshelf.html":"student","survey.html":"student","supporters.html":"student",
-    "map.html":"student","index.html":"student","check.html":"student",
+    "map.html":"student","index.html":"student","check.html":"student","portfolio.html":"student",
     // 담임
     "input.html":"teacher","letter.html":"teacher","codes.html":"teacher","awards.html":"teacher",
     // 교장
@@ -31,7 +31,7 @@ window.ROLES = (function(){
     "input_teacheronly":[],
   };
   // 학부모/학생 공용으로 열어줄 화면
-  const PARENT_OK = ["parenthome.html","schoolhome.html","survey.html","supporters.html","map.html","letter_view.html","home.html","gate.html","index.html","hub.html"];
+  const PARENT_OK = ["parenthome.html","schoolhome.html","survey.html","supporters.html","map.html","letter_view.html","portfolio.html","home.html","gate.html","index.html","hub.html"];
 
   function current(){ return sessionStorage.getItem("ras_role")||""; }   // 미로그인이면 ""
   function setRole(r){ sessionStorage.setItem("ras_role", r); }

@@ -1,0 +1,128 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>내 RAS 발자취</title>
+<script src="ras-config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root{--ink:#1F3A36;--moss:#3E6B5E;--plum:#C9527A;--sky:#3D7EA6;--paper:#FBFAF7;--line:#E6E2DA;--star:#F2C14E}
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--paper);color:var(--ink);max-width:640px;margin:0 auto;padding:16px}
+header{text-align:center;padding:8px 0 12px;border-bottom:2px solid var(--ink)}
+h1{font-size:24px}.sub{font-size:13px;color:var(--moss);margin-top:2px}
+.conn{font-size:12px;padding:6px 10px;border-radius:8px;margin-top:10px}
+.codebox{background:#fff;border:2px solid var(--star);border-radius:14px;padding:16px;text-align:center;margin-top:16px}
+.codebox input{font-size:22px;text-align:center;letter-spacing:2px;border:1px solid var(--line);border-radius:10px;padding:10px;width:100%;font-family:monospace}
+.codebox button{margin-top:10px;width:100%;padding:12px;border:none;border-radius:10px;background:var(--ink);color:#fff;font-size:16px;font-weight:700;cursor:pointer}
+.hero{background:#fff;border-radius:16px;padding:18px;margin-top:16px;text-align:center;border:2px solid var(--star)}
+.hero .who{font-size:14px;color:#777}.hero .big{font-size:44px;font-weight:800;margin:4px 0}
+.hero .msg{font-size:14px;color:var(--moss)}
+.stamps{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px}
+.stamp{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center}
+.stamp .e{font-size:24px}.stamp .n{font-size:20px;font-weight:700}.stamp .l{font-size:11px;color:#777}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:14px}
+.card h3{font-size:15px;margin-bottom:8px}
+.badges{display:flex;flex-wrap:wrap;gap:8px}
+.badge{padding:6px 12px;border-radius:999px;font-size:13px;font-weight:700;background:#EEF4F1;color:var(--moss)}
+.change{display:block;margin:16px auto 0;background:none;border:none;color:#888;text-decoration:underline;font:inherit;cursor:pointer}
+.msg{font-size:13px;color:#777;text-align:center;margin-top:8px}
+@media print{.codebox,.change,.conn,button{display:none}}
+</style></head><body>
+<header><h1>🌸 내 RAS 발자취</h1><div class="sub">내 코드로 이번 학기 나의 독서·예술·스포츠 기록을 봐요</div>
+<div id="conn" class="conn"></div></header>
+
+<section id="codeStep" class="codebox">
+  <div style="font-size:15px;margin-bottom:4px">내 코드를 넣어 주세요</div>
+  <div class="sub" style="margin-bottom:10px">예: 3-1-05 (우리 반 - 내 번호)</div>
+  <input id="code" placeholder="3-1-05" autocomplete="off">
+  <button onclick="load()">내 발자취 보기</button>
+  <div class="msg" id="codemsg"></div>
+</section>
+
+<section id="view" style="display:none"></section>
+<button class="change" id="changeBtn" style="display:none" onclick="location.reload()">다른 코드로 보기</button>
+
+<script>
+let code="";
+const today=new Date().toISOString().slice(0,10);
+function showConn(){ const c=RAS.conf(); const el=document.getElementById("conn");
+  if(!c.url){ el.style.background="#FFF6D6";el.style.color="#8a6d00";el.textContent="학교 시스템에 연결되면 볼 수 있어요(선생님께 문의)"; return false;}
+  el.style.background="#EEF4F1";el.style.color="#3E6B5E";el.textContent="✓ 우리 학교에 연결됨"; return true; }
+
+// ?prefill=3-1-05 지원 (담임이 가정에 준 주소)
+(function(){ var p=new URLSearchParams(location.search).get("prefill"); if(p){ window.addEventListener("DOMContentLoaded",function(){ var el=document.getElementById("code"); if(el)el.value=p; }); } })();
+
+async function load(){
+  const v=document.getElementById("code").value.trim();
+  const m=v.match(/^(\d+)-(\d+)-(\d+)$/);
+  if(!m){ document.getElementById("codemsg").textContent="코드를 3-1-05 처럼 넣어 주세요."; return; }
+  if(!RAS.conf().url){ document.getElementById("codemsg").textContent="학교 시스템에 연결되어야 볼 수 있어요."; return; }
+  code=v;
+  document.getElementById("codemsg").textContent="불러오는 중…";
+  try{
+    const rows=(await RAS.read("checks")).filter(r=>String(r["코드"]).trim()===code);
+    render(m, rows);
+  }catch(e){ document.getElementById("codemsg").textContent="불러오지 못했어요. 다시 시도해 주세요."; }
+}
+
+function render(m, rows){
+  const cls=m[1]+"-"+m[2], num=m[3];
+  const days=new Set(rows.map(r=>String(r["날짜"]).slice(0,10)));
+  const R=rows.reduce((a,r)=>a+(+r["R"]||0),0);
+  const A=rows.reduce((a,r)=>a+(+r["A"]||0),0);
+  const S=rows.reduce((a,r)=>a+(+r["S"]||0),0);
+  const P=rows.reduce((a,r)=>a+(+r["폰프리"]||0),0);
+  const total=R+A+S;
+  const dayN=days.size;
+
+  // 성취 배지 (기준 충족 시)
+  const badges=[];
+  if(dayN>=20) badges.push("🏅 꾸준왕 ("+dayN+"일)");
+  else if(dayN>=10) badges.push("🌱 꾸준 새싹 ("+dayN+"일)");
+  if(P>=15) badges.push("📵 폰 OFF 실천가");
+  if(R>=15) badges.push("📖 책벌레");
+  if(S>=15) badges.push("⚽ 운동왕");
+  if(A>=15) badges.push("🎵 예술가");
+  if(total>=50) badges.push("🌸 매화 만개 ("+total+"번)");
+
+  document.getElementById("codeStep").style.display="none";
+  document.getElementById("changeBtn").style.display="block";
+  const view=document.getElementById("view"); view.style.display="block";
+  view.innerHTML=`
+    <div class="hero">
+      <div class="who">${cls}반 ${num}번</div>
+      <div class="big">🌸 ${total}</div>
+      <div class="msg">이번 학기에 RAS를 ${total}번 실천했어요! (${dayN}일 참여)</div>
+    </div>
+    <div class="stamps">
+      <div class="stamp"><div class="e">📖</div><div class="n">${R}</div><div class="l">독서</div></div>
+      <div class="stamp"><div class="e">🎵</div><div class="n">${A}</div><div class="l">예술</div></div>
+      <div class="stamp"><div class="e">⚽</div><div class="n">${S}</div><div class="l">스포츠</div></div>
+      <div class="stamp"><div class="e">📵</div><div class="n">${P}</div><div class="l">폰 OFF</div></div>
+    </div>
+    ${badges.length?`<div class="card"><h3>🏅 내가 받은 배지</h3><div class="badges">${badges.map(b=>`<span class="badge">${b}</span>`).join("")}</div></div>`:""}
+    <div class="card"><h3>주별 발자취</h3><canvas id="chart" height="160"></canvas></div>
+    <div class="card"><h3>나의 이야기</h3>
+      <p style="font-size:14px;line-height:1.7">${story(R,A,S,P,total,dayN)}</p>
+      <button class="change" style="margin-top:8px" onclick="window.print()">이 발자취 인쇄하기</button></div>
+  `;
+  drawChart(rows);
+}
+
+function story(R,A,S,P,total,dayN){
+  if(total===0) return "아직 발자취가 없어요. 오늘부터 하나씩 채워 봐요!";
+  const most=[["독서",R],["예술",A],["스포츠",S]].sort((a,b)=>b[1]-a[1])[0];
+  let s=`이번 학기 ${dayN}일 동안 꾸준히 참여했어요. `;
+  s+=`특히 <b>${most[0]}</b>을(를) 가장 많이 했네요. `;
+  if(P>=10) s+=`폰 대신 RAS를 택한 날이 ${P}번이나 돼요 — 멋져요! `;
+  s+="다음 학기에도 우리 함께 꽃을 피워 봐요. 🌸";
+  return s;
+}
+
+function drawChart(rows){
+  // 주별 참여 횟수
+  function wk(d){ const dt=new Date(String(d).slice(0,10)); const day=(dt.getDay()+6)%7; dt.setDate(dt.getDate()-day); return dt.toISOString().slice(5,10); }
+  const byW={}; rows.forEach(r=>{ const w=wk(r["날짜"]); byW[w]=(byW[w]||0)+((+r["R"]||0)+(+r["A"]||0)+(+r["S"]||0)); });
+  const labels=Object.keys(byW).sort(); const data=labels.map(l=>byW[l]);
+  new Chart(document.getElementById("chart"),{type:"bar",
+    data:{labels:labels,datasets:[{label:"주별 RAS 실천",data:data,backgroundColor:"#C9527A"}]},
+    options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
+}
+showConn();
+</script></body></html>
