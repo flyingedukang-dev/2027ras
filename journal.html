@@ -39,27 +39,69 @@ function render(){
    ${view==="admin"?formHtml():""}
    <div id="list"></div>`;
   const list=document.getElementById("list");
-  list.innerHTML=[...dec].reverse().map((r,i)=>{const d=r["결정"];return `<div class="item" style="border-left-color:${ST[d]?ST[d][1]:'#ccc'}">
-    <div style="display:flex;justify-content:space-between;font-size:12px;color:#777"><span>${r["시각"]||""} · ${r["출처"]||""}</span><span class="badge" style="background:${ST[d]?ST[d][0]:'#eee'};color:${ST[d]?ST[d][1]:'#333'}">${d}</span></div>
+  const admin = (view==="admin");
+  list.innerHTML=[...dec].reverse().map((r)=>{const d=r["결정"]; const id=r["id"]||""; const noReason=!(r["이유"]&&String(r["이유"]).trim());
+    return `<div class="item" data-id="${id}" style="border-left-color:${ST[d]?ST[d][1]:'#ccc'}">
+    <div style="display:flex;justify-content:space-between;font-size:12px;color:#777"><span>${r["시각"]||""} · ${r["출처"]||""}</span>
+      <span><span class="badge" style="background:${ST[d]?ST[d][0]:'#eee'};color:${ST[d]?ST[d][1]:'#333'}">${d}</span>${admin&&id?` <button class="mini del" data-id="${id}" style="border:1px solid #E6E2DA;background:#fff;border-radius:6px;font-size:11px;padding:1px 6px;cursor:pointer">삭제</button>`:""}</span></div>
     <div style="font-size:14px;margin-top:6px"><b style="color:#B8432F">발견</b> ${r["발견"]||""}<br><b style="color:#3D7EA6">제안</b> ${r["조치"]||""}</div>
-    <div style="font-size:14px;background:#FBFAF7;padding:8px;border-radius:6px;margin-top:6px"><b>교장의 이유</b> ${r["이유"]||"<span style='color:#B8432F'>(이유가 비어 있습니다)</span>"}</div>
-    ${r["결과"]&&r["결과"]!=="-"?`<div style="font-size:14px;margin-top:4px"><b style="color:#3E6B5E">결과</b> ${r["결과"]}</div>`:""}</div>`;}).join("")||'<div class="sub" style="margin-top:14px">아직 기록이 없어요. 대시보드의 AI 보좌관에서 채택·기각하면 여기에 쌓입니다.</div>';
-  if(view==="admin")bindForm();
+    <div style="font-size:14px;background:#FBFAF7;padding:8px;border-radius:6px;margin-top:6px"><b>교장의 이유</b>
+      ${ noReason
+         ? (admin&&id ? `<button class="mini editReason" data-id="${id}" style="color:#B8432F;border:1px dashed #B8432F;background:#fff;border-radius:6px;padding:2px 8px;cursor:pointer">＋ 이유 채우기</button>` : `<span style='color:#B8432F'>(이유가 비어 있습니다)</span>`)
+         : `<span class="rtext">${r["이유"]}</span>${admin&&id?` <button class="mini editReason" data-id="${id}" style="font-size:11px;border:1px solid #E6E2DA;background:#fff;border-radius:6px;padding:1px 6px;cursor:pointer">고치기</button>`:""}` }
+    </div>
+    <div style="font-size:14px;margin-top:4px"><b style="color:#3E6B5E">결과</b>
+      ${ (r["결과"]&&r["결과"]!=="-") ? `<span class="restext">${r["결과"]}</span>` : `<span style="color:#999">${d==="채택"?"관찰 중":"-"}</span>` }
+      ${ admin&&id&&d==="채택" ? ` <button class="mini editResult" data-id="${id}" style="font-size:11px;border:1px solid #E6E2DA;background:#fff;border-radius:6px;padding:1px 6px;cursor:pointer">결과 기록</button>` : "" }
+    </div></div>`;}).join("")||'<div class="sub" style="margin-top:14px">아직 기록이 없어요. 대시보드의 AI 보좌관에서 채택·기각하면 여기에 쌓입니다.</div>';
+  if(admin){ bindForm(); bindEdits(); }
 }
+
+function bindEdits(){
+  // 이유 채우기/고치기
+  document.querySelectorAll(".editReason").forEach(b=>b.onclick=async()=>{
+    const id=b.dataset.id;
+    const cur=b.parentNode.querySelector(".rtext"); const now=cur?cur.textContent:"";
+    const v=prompt("이유를 적어 주세요 (학부모·학생이 읽습니다)", now);
+    if(v==null) return;
+    b.textContent="저장 중…"; b.disabled=true;
+    try{ const res=await RAS.write("feedback","updateFeedback",{id:id,reason:v}); if(res&&res.error)throw new Error(res.error); load(); }
+    catch(e){ alert("저장 실패: "+e.message); b.disabled=false; b.textContent="다시"; }
+  });
+  // 결과 기록
+  document.querySelectorAll(".editResult").forEach(b=>b.onclick=async()=>{
+    const id=b.dataset.id;
+    const v=prompt("결과를 적어 주세요 (예: 2주 후 68%로 회복)","");
+    if(v==null||!v.trim()) return;
+    b.textContent="저장 중…"; b.disabled=true;
+    try{ const res=await RAS.write("feedback","updateFeedback",{id:id,result:v}); if(res&&res.error)throw new Error(res.error); load(); }
+    catch(e){ alert("저장 실패: "+e.message); b.disabled=false; b.textContent="다시"; }
+  });
+  // 삭제(숨김)
+  document.querySelectorAll(".del").forEach(b=>b.onclick=async()=>{
+    if(!confirm("이 기록을 삭제할까요? 되돌릴 수 없습니다.")) return;
+    const id=b.dataset.id; b.textContent="…"; b.disabled=true;
+    try{ const res=await RAS.write("feedback","hideFeedback",{id:id}); if(res&&res.error)throw new Error(res.error); load(); }
+    catch(e){ alert("삭제 실패: "+e.message); b.disabled=false; b.textContent="삭제"; }
+  });
+}
+
 function formHtml(){return `<div class="form"><b style="font-size:14px">결정 기록하기</b>
   <div style="display:flex;gap:4px;margin-top:6px" id="src">${["AI 제안","학부모 설문","학생자치회","교사 협의"].map((s,i)=>`<button class="chip ${i===0?"on":""}" data-s="${s}">${s}</button>`).join("")}</div>
   <input id="find" placeholder="무엇을 발견했나 (수치 포함)"><input id="act" placeholder="제안된 조치">
   <div style="display:flex;gap:4px;margin-top:6px" id="dec">${["채택","보류","기각"].map((s,i)=>`<button class="chip ${i===0?"on":""}" data-d="${s}" style="flex:1">${s}</button>`).join("")}</div>
-  <textarea id="reason" rows="2" placeholder="이유 — 학부모와 학생이 읽는다고 생각하고 (필수)"></textarea>
+  <div style="display:flex;gap:4px;flex-wrap:wrap;margin:6px 0" id="quick">${["예산 없이 가능","학생자치회가 자원","가정 연계로 시너지","시기상조—더 관찰","다른 방안 우선","여건상 어려움"].map(q=>`<button type="button" class="chip qk">${q}</button>`).join("")}</div>\n  <textarea id="reason" rows="2" placeholder="이유 — 학부모와 학생이 읽는다고 생각하고 (필수)"></textarea>
   <button class="btn" id="submit" style="margin-top:6px;width:100%">일지에 올리기</button></div>`;}
 function bindForm(){let src="AI 제안",dec="채택";
   document.querySelectorAll("#src .chip").forEach(b=>b.onclick=()=>{src=b.dataset.s;document.querySelectorAll("#src .chip").forEach(x=>x.classList.remove("on"));b.classList.add("on");});
   document.querySelectorAll("#dec .chip").forEach(b=>b.onclick=()=>{dec=b.dataset.d;document.querySelectorAll("#dec .chip").forEach(x=>x.classList.remove("on"));b.classList.add("on");});
+  document.querySelectorAll("#quick .qk").forEach(b=>b.onclick=()=>{const rz=document.getElementById("reason");rz.value=rz.value?rz.value+", "+b.textContent:b.textContent;rz.focus();});
   document.getElementById("submit").onclick=async()=>{
     const find=document.getElementById("find").value,act=document.getElementById("act").value,reason=document.getElementById("reason").value;
     if(!find||!act||!reason){alert("발견·조치·이유를 모두 채워 주세요");return;}
     document.getElementById("submit").textContent="올리는 중…";
-    await RAS.write("feedback","append",{"시각":new Date().toLocaleString("ko-KR"),"출처":src,"발견":find,"조치":act,"결정":dec,"이유":reason,"결과":dec==="채택"?"관찰 중":"-"});
+    const id="F"+Date.now()+Math.floor(Math.random()*100);
+    await RAS.write("feedback","append",{"id":id,"시각":new Date().toLocaleString("ko-KR"),"출처":src,"발견":find,"조치":act,"결정":dec,"이유":reason,"결과":dec==="채택"?"관찰 중":"-"});
     load();
   };
 }

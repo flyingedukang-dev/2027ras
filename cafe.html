@@ -8,18 +8,19 @@ input,select,textarea{font:inherit;border:1px solid var(--line);border-radius:8p
 .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:10px}
 .grid{display:grid;gap:10px}.g3{grid-template-columns:repeat(3,1fr)}.g2{grid-template-columns:repeat(2,1fr)}
 @media(max-width:640px){.g3,.g2{grid-template-columns:1fr}}</style><script src="roles.js"></script>
+<script src="ras-config.js"></script>
 <script>if(window.ROLES && !ROLES.guard()){throw new Error("redirect");}</script>
 </head><body>
-<header><h1>데이터 카페 · 9월</h1><div class="sub">한 장, 30분, 다음 달 바꿀 것 하나</div></header>
+<header><h1>데이터 카페 · <span id="cMonth"></span></h1><div class="sub">한 장, 30분, 다음 달 바꿀 것 하나</div></header>
 <div class="card" style="border:2px solid var(--star)">
  <b>이번 달 한 장</b>
  <div class="grid g3" style="margin-top:8px">
-  <div style="border-top:5px solid #3E6B5E;background:#FBFAF7;border-radius:8px;padding:8px;text-align:center"><div style="font-size:12px">R 독서</div><div style="font-size:22px;font-weight:700">84%</div><div style="font-size:11px;color:#3E6B5E">전월 +6</div></div>
-  <div style="border-top:5px solid #C9527A;background:#FBFAF7;border-radius:8px;padding:8px;text-align:center"><div style="font-size:12px">A 예술</div><div style="font-size:22px;font-weight:700">80%</div><div style="font-size:11px;color:#3E6B5E">전월 +10</div></div>
-  <div style="border-top:5px solid #3D7EA6;background:#FBFAF7;border-radius:8px;padding:8px;text-align:center"><div style="font-size:12px">S 스포츠</div><div style="font-size:22px;font-weight:700">83%</div><div style="font-size:11px;color:#3E6B5E">전월 +8</div></div>
+  <div style="border-top:5px solid #3E6B5E;background:#FBFAF7;border-radius:8px;padding:8px;text-align:center"><div style="font-size:12px">R 독서</div><div style="font-size:22px;font-weight:700"><span id="cR">–</span>%</div><div style="font-size:11px;color:#3E6B5E" id="cRd"></div></div>
+  <div style="border-top:5px solid #C9527A;background:#FBFAF7;border-radius:8px;padding:8px;text-align:center"><div style="font-size:12px">A 예술</div><div style="font-size:22px;font-weight:700"><span id="cA">–</span>%</div><div style="font-size:11px;color:#3E6B5E" id="cAd"></div></div>
+  <div style="border-top:5px solid #3D7EA6;background:#FBFAF7;border-radius:8px;padding:8px;text-align:center"><div style="font-size:12px">S 스포츠</div><div style="font-size:22px;font-weight:700"><span id="cS">–</span>%</div><div style="font-size:11px;color:#3E6B5E" id="cSd"></div></div>
  </div>
- <div style="font-size:13px;margin-top:10px"><b>70% 아래</b> 3-2 스포츠 68% · 3-3 스포츠 64% · 3-3 예술 69%<br>
- <b>학생 기획</b> 14건(완료 9) · <b>다꿈누리 격차</b> 6%p · <b>가정 인증</b> 118가구 · <b>AI 제안</b> 채택2/보류1/기각2</div>
+ <div style="font-size:13px;margin-top:10px"><b>70% 아래</b> <span id="cLow">–</span><br>
+ <b>학생 기획</b> <span id="cPlan">–</span>건 · <b>AI 제안</b> <span id="cAI">–</span></div>
 </div>
 <div class="card"><b>30분 진행</b>
  <div id="steps" style="margin-top:8px"></div></div>
@@ -35,4 +36,32 @@ function run(i){cur=i;left=ST[i][1]*60;clearInterval(timer);timer=setInterval(()
 function commit(){const v=document.getElementById("one").value;if(!v)return;document.getElementById("past").innerHTML+=`<div style="margin-top:4px">✓ 9월 ${v}</div>`;document.getElementById("one").value="";}
 draw();
 </script><script>if(window.ROLES)ROLES.badge();</script>
+
+<script>
+(function(){
+  function weekKey(d){var s=String(d);var m=s.match(/(\d{4})[-.\/]?\s*(\d{1,2})[-.\/]?\s*(\d{1,2})/);var y,mo,da;if(m){y=+m[1];mo=+m[2];da=+m[3];}else{var dt=new Date(s);if(isNaN(dt))return"";y=dt.getFullYear();mo=dt.getMonth()+1;da=dt.getDate();}var dt=new Date(Date.UTC(y,mo-1,da));var day=(dt.getUTCDay()+6)%7;dt.setUTCDate(dt.getUTCDate()-day);return dt.toISOString().slice(0,10);}
+  var avg=function(a){return a.length?Math.round(a.reduce(function(x,y){return x+y;},0)/a.length):0;};
+  var mn=new Date().getMonth()+1; var el=document.getElementById("cMonth"); if(el) el.textContent=mn+"월";
+  async function fill(){
+    if(!(window.RAS&&RAS.conf&&RAS.conf().url)) return;
+    try{
+      var daily=await RAS.read("daily");
+      if(daily&&daily.length){
+        var byW={};daily.forEach(function(r){if(!r["날짜"])return;var w=weekKey(r["날짜"]);(byW[w]=byW[w]||[]).push(r);});
+        var weeks=Object.keys(byW).sort(); var rows=byW[weeks[weeks.length-1]]||[];
+        function pct(k){var v=rows.map(function(r){var t=parseFloat(String(r["정원"]).replace(/[^0-9.]/g,""))||0;var x=parseFloat(String(r[k]).replace(/[^0-9.]/g,""))||0;return t?Math.round(x/t*100):0;});return avg(v);}
+        // 학급별 낮은 항목
+        var nm={R:"독서",A:"예술",S:"스포츠"}; var low=[];
+        rows.forEach(function(r){var t=parseFloat(String(r["정원"]).replace(/[^0-9.]/g,""))||0;["R","A","S"].forEach(function(k){var x=parseFloat(String(r[k]).replace(/[^0-9.]/g,""))||0;var p=t?Math.round(x/t*100):0;if(p>0&&p<70)low.push(String(r["학급"]).trim()+" "+nm[k]+" "+p+"%");});});
+        set("cR",pct("R"));set("cA",pct("A"));set("cS",pct("S"));
+        var lw=document.getElementById("cLow"); if(lw) lw.textContent=low.length?low.join(" · "):"없음(모두 70% 이상)";
+      }
+    }catch(e){}
+    try{ var props=await RAS.read("proposals"); var pc=document.getElementById("cPlan"); if(pc)pc.textContent=(props?props.length:0); }catch(e){}
+    try{ var fb=await RAS.read("feedback"); if(fb){var a=fb.filter(function(r){return r["출처"]==="AI 제안"&&r["결정"];});var ok=a.filter(function(r){return r["결정"]==="채택";}).length;var no=a.filter(function(r){return r["결정"]==="기각";}).length;var hd=a.filter(function(r){return r["결정"]==="보류";}).length;var ai=document.getElementById("cAI");if(ai)ai.textContent="채택"+ok+"/보류"+hd+"/기각"+no;} }catch(e){}
+  }
+  function set(id,v){var e=document.getElementById(id);if(e)e.textContent=v;}
+  fill();
+})();
+</script>
 </body></html>

@@ -1,38 +1,70 @@
 <!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>우리가 만드는 매화 RAS</title>
 <style>:root{--ink:#1F3A36;--moss:#3E6B5E;--plum:#C9527A;--sky:#3D7EA6;--paper:#FBFAF7;--line:#E6E2DA;--warn:#B8432F;--star:#F2C14E}
-*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--paper);color:var(--ink);max-width:820px;margin:0 auto;padding:16px}
-header{border-bottom:2px solid var(--ink);padding-bottom:10px}h1{font-size:20px}.sub{font-size:13px;color:var(--moss)}
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--paper);color:var(--ink);max-width:900px;margin:0 auto;padding:16px}
+header{border-bottom:2px solid var(--ink);padding-bottom:10px;display:flex;justify-content:space-between;align-items:end;flex-wrap:wrap;gap:8px}h1{font-size:20px}.sub{font-size:13px;color:var(--moss)}
 button{font:inherit;cursor:pointer}.btn{padding:8px 14px;border:none;border-radius:8px;background:var(--ink);color:#fff;font-weight:600}
 .mini{padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:#fff;font-size:13px}
 input,select,textarea{font:inherit;border:1px solid var(--line);border-radius:8px;padding:8px}
-.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:10px}
-.grid{display:grid;gap:10px}.g3{grid-template-columns:repeat(3,1fr)}.g2{grid-template-columns:repeat(2,1fr)}
-@media(max-width:640px){.g3,.g2{grid-template-columns:1fr}}</style></head><body>
-<header><h1>우리가 만드는 매화 RAS</h1><div class="sub">학생자치회 활동 게시판 · 제안 → 실행 → 후기</div></header>
-<div id="app"></div>
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+.col{background:#F1EEE7;border-radius:12px;padding:8px}.col h3{font-size:14px;padding:4px}
+.card{background:#fff;border-radius:10px;padding:10px;margin-top:6px;border-left:5px solid var(--line)}
+.card .t{font-weight:600;font-size:14px}.card .m{font-size:12px;color:#777}
+@media(max-width:640px){.grid{grid-template-columns:1fr}}</style>
+<script src="roles.js"></script><script>if(window.ROLES && !ROLES.guard()){throw new Error("redirect");}</script>
+<script src="ras-config.js"></script>
+</head><body>
+<header><div><h1>우리가 만드는 매화 RAS</h1><div class="sub">제안 → 실행 → 후기</div></div>
+<button class="btn" onclick="openForm()">활동 제안하기</button></header>
+<div id="conn" style="margin-top:10px"></div>
+<div id="form"></div>
+<div class="grid" id="board"><p class="sub">불러오는 중…</p></div>
 <script>
 const AREA={R:["독서","#3E6B5E"],A:["예술문화","#C9527A"],S:["스포츠","#3D7EA6"]};
 const STAGES=[["idea","제안했어요"],["doing","하고 있어요"],["done","끝났어요"]];
-let items=[
- {id:1,area:"S",title:"점심시간 학년 대항 줄넘기",who:"5-2 자치회",when:"9월 3~4주",stage:"doing",likes:23,plan:"매주 수요일 점심, 운동장. 학년별 30초 기록 합산.",review:""},
- {id:2,area:"A",title:"급식실 앞 버스킹",who:"6-1 리코더팀",when:"매주 금요일",stage:"done",likes:41,plan:"1인1악기 연습곡 2곡.",review:"1~2학년이 앞에 앉아서 들었어요. 다음엔 신청곡 받고 싶어요."},
- {id:3,area:"R",title:"도서관 '이 책 어때' 게시판",who:"4-1 도서부",when:"10월",stage:"idea",likes:12,plan:"읽은 책 한 줄 추천 쪽지 붙이는 벽.",review:""},
- {id:4,area:"S",title:"다꿈누리 친구와 같이 축구",who:"3-3",when:"10월 첫 주",stage:"idea",likes:18,plan:"몸튼맘튼 축구클럽에 초대. 팀은 섞어서.",review:""},
-];
-let voted=[];
-function render(){
- document.getElementById("app").innerHTML=`<div class="grid g3" style="margin-top:12px">`+STAGES.map(([id,name])=>`
-  <div style="background:#F1EEE7;border-radius:12px;padding:8px"><div style="font-weight:600;padding:4px">${name} <span style="font-weight:400">${items.filter(x=>x.stage===id).length}</span></div>`+
-  items.filter(x=>x.stage===id).map(x=>`<div class="card" style="border-left:5px solid ${AREA[x.area][1]};margin-top:6px">
-    <div style="font-weight:600;font-size:14px">${x.title}</div><div style="font-size:12px;color:#777">${x.who} · ${x.when}</div>
-    <div style="font-size:12px;margin-top:4px">${x.plan}</div>
-    ${x.review?`<div style="font-size:12px;background:#EEF4F1;border-radius:6px;padding:6px;margin-top:6px"><b>후기</b> ${x.review}</div>`:""}
-    <div style="margin-top:6px"><button class="mini" style="${voted.includes(x.id)?'background:#C9527A;color:#fff':'color:#C9527A;border-color:#C9527A'}" onclick="like(${x.id})">♥ ${x.likes}</button>
-    ${x.stage==="idea"?`<button class="mini" onclick="mv(${x.id},'doing')">시작</button>`:""}
-    ${x.stage==="doing"?`<button class="mini" onclick="mv(${x.id},'done')">완료</button>`:""}</div>
-  </div>`).join("")+`</div>`).join("")+`</div>`;
+let items=[], voted=JSON.parse(localStorage.getItem("board_voted")||"[]");
+
+async function load(){
+  const b=document.getElementById("board");
+  if(!(RAS.conf().url)){ b.innerHTML='<p class="sub">학교 시스템에 연결되면 활동이 보여요. (설정)</p>'; return; }
+  try{
+    const rows=await RAS.read("activities");
+    items=rows.map(r=>({id:r.id,area:r["영역"],title:r["제목"],who:r["누가"],when:r["언제"],stage:r["단계"]||"idea",likes:+r["좋아요"]||0,plan:r["내용"]||"",review:r["후기"]||""}));
+    render();
+  }catch(e){ b.innerHTML='<p class="sub">불러오지 못했어요.</p>'; }
 }
-function like(id){if(voted.includes(id))return;voted.push(id);items.find(x=>x.id==id).likes++;render();}
-function mv(id,st){items.find(x=>x.id==id).stage=st;render();}
-render();
-</script></body></html>
+function render(){
+  document.getElementById("board").innerHTML=STAGES.map(([id,name])=>`<div class="col"><h3>${name} · ${items.filter(x=>x.stage===id).length}</h3>`+
+    items.filter(x=>x.stage===id).map(x=>`<div class="card" style="border-left-color:${(AREA[x.area]||['',''])[1]}">
+      <div class="t">${x.title||""}</div><div class="m">${x.who||""} · ${x.when||""}</div>
+      ${x.plan?`<div style="font-size:12px;margin-top:4px">${x.plan}</div>`:""}
+      ${x.review?`<div style="font-size:12px;background:#EEF4F1;border-radius:6px;padding:6px;margin-top:6px"><b>후기</b> ${x.review}</div>`:""}
+      <div style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap">
+        <button class="mini" style="${voted.includes(x.id)?'background:#C9527A;color:#fff':'color:#C9527A;border-color:#C9527A'}" onclick="like('${x.id}')">♥ ${x.likes}</button>
+        ${x.stage==="idea"?`<button class="mini" onclick="stage('${x.id}','doing')">시작</button>`:""}
+        ${x.stage==="doing"?`<button class="mini" onclick="finish('${x.id}')">후기 남기고 완료</button>`:""}
+      </div></div>`).join("")+`</div>`).join("")||'<p class="sub">아직 제안이 없어요. "활동 제안하기"를 눌러 첫 활동을 올려 보세요.</p>';
+}
+function openForm(){
+  const f=document.getElementById("form");let area="S";
+  f.innerHTML=`<div class="card" style="border-left:none;border:1px solid var(--line);margin-top:10px">
+    <div style="display:flex;gap:6px">${Object.entries(AREA).map(([k,a])=>`<button class="mini ab" data-k="${k}">${k} ${a[0]}</button>`).join("")}</div>
+    <input id="ti" placeholder="무엇을 할까요?" style="width:100%;margin-top:6px">
+    <div style="display:flex;gap:6px;margin-top:6px"><input id="wh" placeholder="누가 (예: 4-1 도서부)" style="flex:1"><input id="wn" placeholder="언제" style="width:120px"></div>
+    <textarea id="pl" rows="2" placeholder="어떻게 할 건지 간단히" style="width:100%;margin-top:6px"></textarea>
+    <button class="btn" id="sb" style="width:100%;margin-top:6px">제안 올리기</button><div id="fm" class="sub" style="margin-top:4px"></div></div>`;
+  f.querySelectorAll(".ab").forEach(b=>b.onclick=()=>{area=b.dataset.k;f.querySelectorAll(".ab").forEach(x=>{x.style.background="";x.style.color="";});b.style.background=AREA[area][1];b.style.color="#fff";});
+  f.querySelector("#sb").onclick=async()=>{
+    const title=f.querySelector("#ti").value.trim();if(!title){f.querySelector("#fm").textContent="무엇을 할지 적어 주세요.";return;}
+    const id="AC"+Date.now();f.querySelector("#sb").textContent="올리는 중…";
+    try{ await RAS.write("activities","append",{id:id,"시각":new Date().toLocaleString("ko-KR"),"영역":area,"제목":title,"누가":f.querySelector("#wh").value,"언제":f.querySelector("#wn").value,"단계":"idea","좋아요":0,"내용":f.querySelector("#pl").value,"후기":""}); f.innerHTML="";load(); }
+    catch(e){ f.querySelector("#fm").textContent="실패: "+e.message; }
+  };
+}
+async function like(id){ if(voted.includes(id))return; voted.push(id);localStorage.setItem("board_voted",JSON.stringify(voted)); const it=items.find(x=>x.id==id);if(it)it.likes++;render(); try{await RAS.write("activities","incField",{tab:"activities",id:id,field:"좋아요"});}catch(e){} }
+async function stage(id,st){ const it=items.find(x=>x.id==id);if(it)it.stage=st;render(); try{await RAS.write("activities","setField",{tab:"activities",id:id,field:"단계",value:st});}catch(e){} }
+async function finish(id){ const rv=prompt("후기를 남겨 주세요 (어땠나요?)",""); if(rv==null)return; const it=items.find(x=>x.id==id);if(it){it.review=rv;it.stage="done";}render(); try{ await RAS.write("activities","setField",{tab:"activities",id:id,field:"후기",value:rv}); await RAS.write("activities","setField",{tab:"activities",id:id,field:"단계",value:"done"});}catch(e){} }
+if(window.RAS&&RAS.banner)RAS.banner(document.getElementById("conn"));
+if(RAS.conf().url) load(); else document.getElementById("board").innerHTML='<p class="sub">학교 시스템에 연결되면 활동이 보여요.</p>';
+</script>
+<script>if(window.ROLES)ROLES.badge();</script>
+</body></html>

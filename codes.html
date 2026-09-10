@@ -1,0 +1,64 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>학생 코드 발급 · 교사</title>
+<script src="roles.js"></script>
+<script>if(window.ROLES && !ROLES.guard()){throw new Error("redirect");}</script>
+<script src="ras-config.js"></script>
+<style>
+:root{--ink:#1F3A36;--moss:#3E6B5E;--paper:#FBFAF7;--line:#E6E2DA}
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--paper);color:var(--ink);max-width:760px;margin:0 auto;padding:16px}
+header{border-bottom:2px solid var(--ink);padding-bottom:10px}h1{font-size:20px}.sub{font-size:13px;color:var(--moss)}
+.bar{display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap}
+select,input{font:inherit;border:1px solid var(--line);border-radius:8px;padding:8px}
+button{font:inherit;cursor:pointer;border:none;border-radius:8px;padding:8px 14px;background:var(--ink);color:#fff;font-weight:600}
+.mini{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:400}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:16px}
+.code{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center}
+.code .n{font-size:22px;font-weight:800;font-family:monospace}
+.code .u{font-size:10px;color:#999;word-break:break-all;margin-top:4px}
+.note{font-size:13px;color:#666;background:#EEF4F1;border-radius:10px;padding:12px;margin-top:16px;line-height:1.6}
+@media print{.bar,.note,header .sub{display:none}.code{border:1px solid #ccc}}
+</style></head><body>
+<header><h1>학생 코드 발급</h1><div class="sub">반을 고르면 학생 코드가 자동으로 나옵니다. 인쇄해서 나눠주세요.</div></header>
+<div id="conn" style="margin-top:10px"></div>
+<div class="bar">
+  <span class="sub">반</span><select id="cls"></select>
+  <span class="sub">체크 주소</span><input id="base" style="flex:1;min-width:200px" placeholder="예: https://아이디.github.io/ras2/check.html">
+  <button class="mini" onclick="window.print()">인쇄</button>
+</div>
+<div class="grid" id="grid"></div>
+<div class="note" id="note">
+  학생은 위 체크 주소를 열고 자기 코드(예: 3-1-05)를 넣어 체크합니다. 코드에는 이름이 없습니다 —
+  누가 몇 번인지는 <b>담임 선생님이 종이 명단으로만</b> 관리하세요. 시스템에는 이름·개인정보가 저장되지 않습니다.
+</div>
+<script>
+let roster=[];
+async function init(){
+  try{ roster = (window.RAS&&RAS.roster)? await RAS.roster() : []; }catch(e){ roster=[]; }
+  const sel=document.getElementById("cls");
+  const list = roster.length? roster.map(x=>x.cls) : ["3-1"];
+  sel.innerHTML=list.map(c=>`<option>${c}</option>`).join("");
+  sel.onchange=render;
+  // 체크 주소 기본값: 현재 주소에서 codes.html→check.html
+  document.getElementById("base").value = location.href.replace(/codes\.html.*$/,"check.html");
+  document.getElementById("base").oninput=render;
+  render();
+}
+function capOf(cls){ const r=roster.find(x=>x.cls===cls); return r? r.cap : 20; }
+function render(){
+  const cls=document.getElementById("cls").value;
+  const cap=capOf(cls);
+  const base=document.getElementById("base").value.trim();
+  let h="";
+  for(let i=1;i<=cap;i++){
+    const num=String(i).padStart(2,"0");
+    const code=cls+"-"+num;
+    const url= base ? base+"?prefill="+encodeURIComponent(code) : "";
+    h+=`<div class="code"><div class="n">${code}</div>${url?`<div class="u">${url}</div>`:""}</div>`;
+  }
+  document.getElementById("grid").innerHTML=h;
+}
+if(window.RAS&&RAS.banner)RAS.banner(document.getElementById("conn"));
+init();
+</script>
+<script>if(window.ROLES)ROLES.badge();</script>
+</body></html>

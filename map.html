@@ -9,6 +9,7 @@ input,select,textarea{font:inherit;border:1px solid var(--line);border-radius:8p
 <header><h1>동네 매화 RAS 맵</h1><div class="sub">가족이 다녀오면 그 자리에 꽃이 하나</div></header>
 <div class="card"><svg id="map" viewBox="0 0 800 440" style="width:100%;background:#EEF2EA;border-radius:10px"></svg></div>
 <div class="card" id="panel"><div class="sub">지도에서 다녀온 곳을 눌러 "다녀왔어요"를 눌러 주세요.</div></div>
+<script src="ras-config.js"></script>
 <script>
 const SPOTS=[
  {id:1,area:"R",name:"영통도서관",x:560,y:130,n:10},{id:2,area:"R",name:"작은도서관",x:210,y:110,n:4},
@@ -30,6 +31,8 @@ function pick(id){sel=id;const p=SPOTS.find(x=>x.id===id);
  document.getElementById("panel").innerHTML=`<div style="font-weight:600">${p.name} <span class="mini" style="background:${COL[p.area]};color:#fff;border:none">${p.area} ${NM[p.area]}</span></div>
   <div class="sub" style="margin-top:4px">이번 달 ${p.n}가족 다녀감</div>
   <button class="btn" style="margin-top:8px" onclick="go(${id})">다녀왔어요</button>`;draw();}
-function go(id){const p=SPOTS.find(x=>x.id===id);p.n++;pick(id);}
-draw();
+async function go(id){const p=SPOTS.find(x=>x.id===id);p.n++;pick(id);
+  try{ if(RAS.conf&&RAS.conf().url){ await RAS.write("visits","append",{id:"V"+Date.now(),"시각":new Date().toLocaleString("ko-KR"),"장소":p.name,"학급":""}); } }catch(e){}}
+async function loadVisits(){ try{ if(!(RAS.conf&&RAS.conf().url))return; const rows=await RAS.read("visits"); if(rows&&rows.length){ SPOTS.forEach(function(p){ p.n=rows.filter(function(r){return String(r["장소"])===p.name;}).length; }); draw(); } }catch(e){} }
+draw(); loadVisits();
 </script></body></html>

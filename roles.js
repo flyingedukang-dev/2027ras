@@ -2,9 +2,9 @@
    역할 3개: student(암호 없음) / teacher(담임 암호) / admin(교장 암호)
    ── 학교에서 아래 두 암호를 바꿔 쓰세요 ── */
 window.ROLES = (function(){
-  const TEACHER_PW = "1234";  // 담임 암호
-  const ADMIN_PW   = "1234";    // 교장 암호
-  const PARENT_PW  = "1234";     // 학부모 공유 암호(가정통신문으로 안내)
+  const TEACHER_PW = "maehwa-teacher";  // 담임 암호
+  const ADMIN_PW   = "maehwa-admin";    // 교장 암호
+  const PARENT_PW  = "maehwa-home";     // 학부모 공유 암호(가정통신문으로 안내)
 
   // 화면별 필요 권한
   const NEED = {
@@ -14,9 +14,9 @@ window.ROLES = (function(){
     "home.html":"student","hub.html":"student","gate.html":"student",
     "budget.html":"student","board.html":"student","kidsmeeting.html":"student",
     "bookshelf.html":"student","survey.html":"student","supporters.html":"student",
-    "map.html":"student","index.html":"student",
+    "map.html":"student","index.html":"student","check.html":"student",
     // 담임
-    "input.html":"teacher","letter.html":"teacher",
+    "input.html":"teacher","letter.html":"teacher","codes.html":"teacher",
     // 교장
     "dashboard.html":"admin","journal.html":"admin","tree.html":"admin",
     "analyzer.html":"admin","cafe.html":"admin","tagger.html":"admin","weather.html":"admin",
@@ -25,7 +25,7 @@ window.ROLES = (function(){
   // 화면별로 '이 역할들만' 허용 (RANK로 안 잡히는 parent 전용 처리)
   const ONLY = {
     "parenthome.html":["parent"],
-    "input.html":["teacher","admin"], "letter.html":["teacher","admin"],
+    "input.html":["teacher","admin"], "letter.html":["teacher","admin"], "codes.html":["teacher","admin"],
     "dashboard.html":["admin"], "journal.html":["admin"], "tree.html":["admin"],
     "analyzer.html":["admin"], "cafe.html":["admin"], "tagger.html":["admin"], "weather.html":["admin"],
     "input_teacheronly":[],

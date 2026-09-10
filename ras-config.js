@@ -43,5 +43,24 @@ window.RAS = (function () {
     }
     el.check = check; check();
   }
-  return { conf, setConf, read, write, banner };
+
+  // 학급 명단(roster) 불러오기 — 모든 화면이 공유. 세션 동안 캐시.
+  var _roster=null;
+  async function roster(){
+    if(_roster) return _roster;
+    try{
+      var rows = await read("roster");
+      _roster = rows.map(function(r){ return {
+        cls: String(r["학급"]).trim(),
+        cap: parseInt(String(r["정원"]).replace(/[^0-9]/g,""),10)||0,
+        dakkum: String(r["다꿈누리"]).trim().toUpperCase()==="Y"
+      };}).filter(function(x){ return x.cls; });
+    }catch(e){ _roster=[]; }
+    return _roster;
+  }
+  function classesList(r){ return r.map(function(x){return x.cls;}); }
+  function capMap(r){ var m={}; r.forEach(function(x){m[x.cls]=x.cap;}); return m; }
+  function dakkumList(r){ return r.filter(function(x){return x.dakkum;}).map(function(x){return x.cls;}); }
+
+  return { conf, setConf, read, write, banner, roster, classesList, capMap, dakkumList };
 })();

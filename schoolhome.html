@@ -52,6 +52,7 @@
   footer{padding:32px 0;font-size:13px;color:#777;border-top:2px solid var(--ink);margin-top:24px}
   @media(max-width:760px){.hero{grid-template-columns:1fr;padding-top:28px}.hero h1{font-size:30px}.grid3,.tools,.diag{grid-template-columns:1fr}}
 </style>
+<script src="ras-config.js"></script>
 </head>
 <body>
 <header><div class="wrap">
@@ -83,20 +84,20 @@
 
   <section id="ras">
     <h2>R · A · S 이번 주</h2>
-    <p class="lead">담임 선생님이 매일 입력한 참여 기록이 자동으로 모입니다.</p>
+    <p class="lead">우리 학교 전체의 이번 주 참여율이에요. <span id="weekLabel"></span></p>
     <div class="grid3">
-      <div class="card R"><h3>R 독서</h3><div class="stat">84<small>% 참여</small></div>
+      <div class="card R"><h3>R 독서</h3><div class="stat"><span id="pctR">–</span><small>% 참여</small></div>
         <ul><li>학급별 아침독서 현황판</li><li>이중언어 독서기록 갤러리</li><li>도서관 개방 시간 · 북콘서트</li></ul></div>
-      <div class="card A"><h3>A 예술문화</h3><div class="stat">80<small>% 참여</small></div>
+      <div class="card A"><h3>A 예술문화</h3><div class="stat"><span id="pctA">–</span><small>% 참여</small></div>
         <ul><li>온라인 매화 갤러리</li><li>1인1악기 연주 영상관</li><li>점심 버스킹 · 매화 음악회</li></ul></div>
-      <div class="card S"><h3>S 스포츠</h3><div class="stat">83<small>% 참여</small></div>
+      <div class="card S"><h3>S 스포츠</h3><div class="stat"><span id="pctS">–</span><small>% 참여</small></div>
         <ul><li>오아시스 아침운동 기록</li><li>학급 줄넘기 챌린지 순위</li><li>스포츠클럽 · 축구클럽 일정</li></ul></div>
     </div>
   </section>
 
   <section id="student">
     <h2>학생이 만드는 RAS</h2>
-    <p class="lead">제안 → 실행 → 후기. 올해 학생 기획 활동 14건, 완료 9건.</p>
+    <p class="lead">제안 → 실행 → 후기. 올해 학생 기획 활동 <b id="planCount">–</b>건.</p>
     <div class="grid3">
       <div class="card A"><h3>급식실 앞 버스킹</h3><ul><li>6-1 리코더팀 · 매주 금요일</li><li>"1~2학년이 앞에 앉아서 들었어요"</li></ul></div>
       <div class="card S"><h3>학년 대항 줄넘기</h3><ul><li>5-2 자치회 · 진행 중</li><li>수요일 점심 · 30초 기록 합산</li></ul></div>
@@ -108,7 +109,7 @@
     <h2>가정·지역과 함께</h2>
     <p class="lead">학교에서 시작한 RAS가 집과 동네로 이어집니다.</p>
     <div class="grid3">
-      <div class="card"><h3>가족 RAS 인증</h3><div class="stat">118<small>가구 · 52%</small></div><ul><li>주말 가족 독서 · 산책 인증</li><li>학부모 참여 음악회</li></ul></div>
+      <div class="card"><h3>가족 RAS 인증</h3><div class="stat"><span id="famCount">–</span><small>가구 다녀감</small></div><ul><li>주말 가족 독서 · 산책 인증</li><li>학부모 참여 음악회</li></ul></div>
       <div class="card"><h3>지역 연계</h3><ul><li>영통도서관 · 상호대차</li><li>지역 예술단체 · 강사 지원</li><li>체육시설 · 축구클럽 연계</li></ul></div>
       <div class="card"><h3>의견함</h3><ul><li>학부모 다국어 진단 설문</li><li>결과는 성과 메뉴에 공개</li><li>학교·가정·지역 협의회 연 2회</li></ul></div>
     </div>
@@ -116,27 +117,58 @@
 
   <section id="result">
     <h2>성과와 나눔</h2>
-    <p class="lead">경기도교육청 문예체 활동 진단 9요소 · 3월 사전 → 9월 현재(5점 척도)</p>
-    <div class="diag">
-      <div><h4>Ⅰ 전인화</h4><ol><li>교육과정 3.2 → 3.9</li><li>방과후활동 3.0 → 3.6</li></ol></div>
-      <div><h4>Ⅱ 일상화</h4><ol start="3"><li>일상적 운영 2.6 → 3.8</li><li>참여 시간 2.8 → 4.0</li><li>공간 접근성 2.4 → 3.5</li><li>학생 주도성 2.1 → 3.7</li></ol></div>
-      <div><h4>Ⅲ 전면화</h4><ol start="7"><li>가정 연계 2.3 → 3.1</li><li>지역 연계 2.7 → 3.3</li><li>협력과 환류 2.2 → 3.4</li></ol></div>
+    <p class="lead">학교와 가정·지역이 함께 만든 이번 학기 이야기예요.</p>
+    <div class="grid3">
+      <div class="card"><h3>독서</h3><ul><li>아침독서로 하루를 열어요</li><li>이중언어 독서기록으로 다꿈누리 친구와 함께</li></ul></div>
+      <div class="card"><h3>예술·스포츠</h3><ul><li>1인1악기 · 점심 버스킹 · 매화 음악회</li><li>오아시스 아침운동 · 학급 줄넘기</li></ul></div>
+      <div class="card"><h3>함께 나눔</h3><ul><li>가족 RAS 인증 · 지역 기관 연계</li><li>학부모 다국어 설문으로 의견을 모아요</li></ul></div>
     </div>
-    <p style="font-size:14px;margin-top:14px">월별 활동 사진·일지 아카이브, 카드뉴스, 성과 공유회 자료는 이 메뉴에 쌓입니다.</p>
+    <p style="font-size:14px;margin-top:14px;color:#666">자세한 학교 운영 현황과 개선 과정은 학교가 관리합니다. 이 페이지에는 학생 개인 정보가 표시되지 않습니다.</p>
   </section>
 
   <section id="tools">
     <h2>참여하기</h2>
     <p class="lead">역할에 맞는 화면으로 들어갑니다.</p>
     <div class="tools">
-      <div class="tool"><b>오늘의 RAS 체크</b><span>담임 선생님 · 참여 인원 30초 입력</span><a href="#">입력하기</a></div>
-      <div class="tool student"><b>우리가 만드는 RAS</b><span>학생 · 활동 제안하고 후기 남기기</span><a href="#">제안하기</a></div>
-      <div class="tool"><b>RAS 진단 설문</b><span>교사·학생·학부모 · 5개 언어 · 2분</span><a href="#">응답하기</a></div>
-      <div class="tool"><b>경영 대시보드</b><span>관리자 · 학급별 현황과 환류 기록</span><a href="#">열기</a></div>
+      <div class="tool"><b>RAS 진단 설문</b><span>학부모 · 5개 언어 · 2분</span><a href="survey.html">응답하기</a></div>
+      <div class="tool"><b>다꿈 서포터즈</b><span>13개국 학부모 참여단</span><a href="supporters.html">참여하기</a></div>
+      <div class="tool"><b>가족 RAS 맵</b><span>주말 가족 나들이 인증</span><a href="map.html">인증하기</a></div>
+      <div class="tool"><b>주간 편지</b><span>우리 반 이번 주 소식</span><a href="letter_view.html">보러가기</a></div>
     </div>
   </section>
 </main>
 
-<footer><div class="wrap">수원매화초등학교 · 경기도 수원시 영통구 · 사진·이름은 학기 초 동의를 받은 범위에서만 게시합니다. 시안 데이터입니다.</div></footer>
+<footer><div class="wrap">수원매화초등학교 · 경기도 수원시 영통구 · 학생 개인 정보는 표시되지 않으며, 학급·학교 단위 소식만 제공합니다.</div></footer>
+
+<script>
+(function(){
+  function weekKey(d){ // ras-config 없이도 동작하도록 간단 구현
+    var s=String(d); var m=s.match(/(\d{4})[-.\/]?\s*(\d{1,2})[-.\/]?\s*(\d{1,2})/);
+    var y,mo,da; if(m){y=+m[1];mo=+m[2];da=+m[3];} else { var dt=new Date(s); if(isNaN(dt))return ""; y=dt.getFullYear();mo=dt.getMonth()+1;da=dt.getDate(); }
+    var dt=new Date(Date.UTC(y,mo-1,da)); var day=(dt.getUTCDay()+6)%7; dt.setUTCDate(dt.getUTCDate()-day);
+    return dt.toISOString().slice(0,10);
+  }
+  var avg=function(a){return a.length?Math.round(a.reduce(function(x,y){return x+y;},0)/a.length):0;};
+  async function fill(){
+    if(!(window.RAS&&RAS.conf&&RAS.conf().url)) return; // 미연결이면 '–' 유지
+    try{
+      var daily=await RAS.read("daily");
+      if(daily&&daily.length){
+        var byW={}; daily.forEach(function(r){ if(!r["날짜"])return; var w=weekKey(r["날짜"]); (byW[w]=byW[w]||[]).push(r); });
+        var weeks=Object.keys(byW).sort(); var last=weeks[weeks.length-1];
+        var rows=byW[last]||[];
+        function pct(k){ var v=rows.map(function(r){ var t=parseFloat(String(r["정원"]).replace(/[^0-9.]/g,""))||0; var x=parseFloat(String(r[k]).replace(/[^0-9.]/g,""))||0; return t? Math.round(x/t*100):0; }); return avg(v); }
+        var eR=document.getElementById("pctR"), eA=document.getElementById("pctA"), eS=document.getElementById("pctS");
+        if(eR)eR.textContent=pct("R"); if(eA)eA.textContent=pct("A"); if(eS)eS.textContent=pct("S");
+        var wl=document.getElementById("weekLabel"); if(wl&&last) wl.textContent="(기준 주 "+last+")";
+      }
+    }catch(e){}
+    // 학생 기획 건수 (proposals)
+    try{ var props=await RAS.read("proposals"); var pc=document.getElementById("planCount"); if(pc) pc.textContent=(props?props.length:0); }catch(e){}
+    try{ var visits=await RAS.read("visits"); var fc=document.getElementById("famCount"); if(fc) fc.textContent=(visits?visits.length:0); }catch(e){}
+  }
+  fill();
+})();
+</script>
 </body>
 </html>

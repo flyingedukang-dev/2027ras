@@ -1,0 +1,131 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>오늘의 RAS 체크 · 학생</title>
+<script src="ras-config.js"></script>
+<style>
+:root{--ink:#1F3A36;--moss:#3E6B5E;--plum:#C9527A;--sky:#3D7EA6;--paper:#FBFAF7;--line:#E6E2DA;--star:#F2C14E}
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--paper);color:var(--ink);max-width:460px;margin:0 auto;padding:16px;min-height:100vh}
+header{text-align:center;padding:8px 0 14px;border-bottom:2px solid var(--ink)}
+h1{font-size:22px}.sub{font-size:13px;color:var(--moss);margin-top:2px}
+.conn{font-size:12px;padding:6px 10px;border-radius:8px;margin-top:10px}
+.step{margin-top:16px}
+.codebox{background:#fff;border:2px solid var(--star);border-radius:14px;padding:16px;text-align:center}
+.codebox input{font-size:22px;text-align:center;letter-spacing:2px;border:1px solid var(--line);border-radius:10px;padding:10px;width:100%;font-family:monospace}
+.codebox button{margin-top:10px;width:100%;padding:12px;border:none;border-radius:10px;background:var(--ink);color:#fff;font-size:16px;font-weight:700;cursor:pointer}
+.hi{font-size:15px;text-align:center;margin:6px 0 2px}
+.card{background:#fff;border-radius:16px;padding:18px;margin-top:12px;border-top:8px solid var(--line);text-align:center}
+.card.R{border-color:var(--moss)}.card.A{border-color:var(--plum)}.card.S{border-color:var(--sky)}
+.card .emoji{font-size:40px}
+.card h3{font-size:19px;margin:6px 0}
+.card .desc{font-size:13px;color:#777;margin-bottom:12px}
+.chk{width:100%;padding:16px;border:2px solid var(--line);border-radius:12px;background:#fff;font-size:17px;font-weight:700;cursor:pointer;color:var(--ink)}
+.chk.on{color:#fff}
+.card.R .chk.on{background:var(--moss);border-color:var(--moss)}
+.card.A .chk.on{background:var(--plum);border-color:var(--plum)}
+.card.S .chk.on{background:var(--sky);border-color:var(--sky)}
+.save{width:100%;padding:18px;border:none;border-radius:14px;background:var(--ink);color:#fff;font-size:19px;font-weight:800;margin-top:16px;cursor:pointer}
+.save.done{background:var(--moss)}.save:disabled{background:#bbb}
+.msg{text-align:center;font-size:13px;margin-top:10px;color:#777}
+.big-done{text-align:center;padding:30px 0}
+.big-done .em{font-size:60px}.big-done .t{font-size:22px;font-weight:800;margin-top:8px}
+.change{display:block;margin:14px auto 0;background:none;border:none;color:#888;text-decoration:underline;font:inherit;cursor:pointer}
+</style></head><body>
+<header>
+  <h1>오늘의 RAS 체크</h1>
+  <div class="sub">폰 OFF, 매화 RAS ON</div>
+  <div id="conn" class="conn"></div>
+</header>
+
+<!-- 1단계: 코드 입력 -->
+<section class="step" id="codeStep">
+  <div class="codebox">
+    <div class="hi">내 코드를 넣어 주세요</div>
+    <div class="sub" style="margin-bottom:10px">예: 3-1-05 (우리 반 - 내 번호)</div>
+    <input id="code" placeholder="3-1-05" autocomplete="off">
+    <button onclick="enter()">들어가기</button>
+    <div class="msg" id="codemsg"></div>
+  </div>
+</section>
+
+<!-- 2단계: 체크 -->
+<section class="step" id="checkStep" style="display:none">
+  <div class="hi" id="hi"></div>
+  <div class="card R"><div class="emoji">📖</div><h3>R 아침독서</h3><div class="desc">오늘 아침독서를 했어요</div>
+    <button class="chk" data-k="R" onclick="toggle('R',this)">아직이에요</button></div>
+  <div class="card A"><div class="emoji">🎵</div><h3>A 예술활동</h3><div class="desc">악기·미술·버스킹을 했어요</div>
+    <button class="chk" data-k="A" onclick="toggle('A',this)">아직이에요</button></div>
+  <div class="card S"><div class="emoji">⚽</div><h3>S 오아시스 아침운동</h3><div class="desc">아침운동을 했어요</div>
+    <button class="chk" data-k="S" onclick="toggle('S',this)">아직이에요</button></div>
+  <button class="save" id="save" onclick="save()">오늘 체크 저장</button>
+  <div class="msg" id="savemsg"></div>
+  <button class="change" onclick="location.reload()">다른 코드로 바꾸기</button>
+</section>
+
+<!-- 3단계: 완료 -->
+<section class="step" id="doneStep" style="display:none">
+  <div class="big-done"><div class="em">🌸</div><div class="t" id="doneTxt">오늘 체크 완료!</div>
+    <div class="sub" id="doneSub" style="margin-top:8px"></div></div>
+  <button class="change" onclick="location.reload()">다시 체크하기</button>
+</section>
+
+<script>
+let cls="", code="", val={R:false,A:false,S:false};
+// 주소에 ?prefill=3-1-05 가 있으면 코드 칸에 미리 넣기
+(function(){ var p=new URLSearchParams(location.search).get("prefill"); if(p){ window.addEventListener("DOMContentLoaded",function(){ var el=document.getElementById("code"); if(el) el.value=p; }); } })();
+const today=new Date().toISOString().slice(0,10);
+
+// 연결 상태
+function showConn(){
+  const c=RAS.conf(); const el=document.getElementById("conn");
+  if(!c.url){ el.style.background="#FFF6D6"; el.style.color="#8a6d00"; el.textContent="아직 학교 시스템에 연결되지 않았어요(선생님께 문의)"; return false; }
+  el.style.background="#EEF4F1"; el.style.color="#3E6B5E"; el.textContent="✓ 우리 학교에 연결됨 · "+today;
+  return true;
+}
+
+function enter(){
+  const v=document.getElementById("code").value.trim();
+  // 형식: 학년-반-번호 (예: 3-1-05) → 학급은 앞 두 조각
+  const m=v.match(/^(\d+)-(\d+)-(\d+)$/);
+  if(!m){ document.getElementById("codemsg").textContent="코드를 3-1-05 처럼 넣어 주세요."; return; }
+  code=v; cls=m[1]+"-"+m[2];
+  document.getElementById("hi").textContent=cls+"반 "+m[3]+"번, 오늘 한 것을 눌러 주세요";
+  document.getElementById("codeStep").style.display="none";
+  document.getElementById("checkStep").style.display="block";
+  // 오늘 이미 체크했는지 불러오기(중복 방지 안내)
+  loadMine();
+}
+
+async function loadMine(){
+  try{
+    const rows=await RAS.read("checks");
+    const mine=rows.filter(r=>String(r["날짜"])===today && String(r["코드"]).trim()===code);
+    if(mine.length){
+      const last=mine[mine.length-1];
+      val={R:Number(last["R"])>0, A:Number(last["A"])>0, S:Number(last["S"])>0};
+      document.querySelectorAll(".chk").forEach(b=>{ const k=b.dataset.k; setBtn(b,val[k]); });
+      document.getElementById("savemsg").textContent="오늘 이미 체크했어요. 고쳐서 다시 저장할 수 있어요.";
+    }
+  }catch(e){}
+}
+function setBtn(b,on){ b.classList.toggle("on",on); b.textContent=on?"했어요! ✓":"아직이에요"; }
+function toggle(k,b){ val[k]=!val[k]; setBtn(b,val[k]); }
+
+async function save(){
+  if(!RAS.conf().url){ document.getElementById("savemsg").textContent="학교 연결이 필요해요. 선생님께 알려 주세요."; return; }
+  const btn=document.getElementById("save"); btn.textContent="저장 중…"; btn.disabled=true;
+  try{
+    const c=RAS.conf();
+    const r=await fetch(c.url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},
+      body:JSON.stringify({key:c.key,tab:"checks",action:"studentCheck",date:today,cls:cls,code:code,R:val.R,A:val.A,S:val.S})});
+    const d=await r.json();
+    if(d.error) throw new Error(d.error);
+    const n=(val.R?1:0)+(val.A?1:0)+(val.S?1:0);
+    document.getElementById("checkStep").style.display="none";
+    document.getElementById("doneStep").style.display="block";
+    document.getElementById("doneSub").textContent="오늘 "+n+"가지를 체크했어요. 내일 또 만나요!";
+  }catch(e){
+    btn.textContent="오늘 체크 저장"; btn.disabled=false;
+    document.getElementById("savemsg").textContent="저장 실패: "+e.message;
+  }
+}
+showConn();
+</script></body></html>

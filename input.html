@@ -38,6 +38,7 @@
 </style>
 <script src="roles.js"></script>
 <script>if(window.ROLES && !ROLES.guard()){throw new Error("redirect");}</script>
+<script src="ras-config.js"></script>
 </head>
 <body>
 <header>
@@ -76,17 +77,32 @@
 </details>
 
 <script>
-const CLASSES = {"1-1":20,"1-2":20,"2-1":21,"2-2":21,"3-1":20,"3-2":20,"3-3":20,"4-1":22,"4-2":22,"5-1":19,"5-2":19,"5-3":19,"6-1":22};
-const DAKKUM = ["3-1","4-2","5-1","6-1"];
+let CLASSES = {"1-1":20,"1-2":20,"2-1":21,"2-2":21,"3-1":20,"3-2":20,"3-3":20,"4-1":22,"4-2":22,"5-1":19,"5-2":19,"5-3":19,"6-1":22}; // 시트 연결 시 자동 교체(기본값)
+let DAKKUM = ["3-1","4-2","5-1","6-1"];
+
+// 시트의 roster 탭에서 학급·정원·다꿈누리를 불러와 위 값을 교체
+async function loadRoster(){
+  try{
+    if(!(window.RAS && RAS.roster)) return;
+    const r = await RAS.roster();
+    if(r && r.length){
+      CLASSES = RAS.capMap(r);
+      DAKKUM = RAS.dakkumList(r);
+      if(!CLASSES[cls]) cls = Object.keys(CLASSES)[0];  // 첫 학급으로
+      renderClasses(); renderCounters();
+      document.getElementById("dakkumBox").style.display = DAKKUM.includes(cls)?"block":"none";
+    }
+  }catch(e){}
+}
 const AREAS = [["R","아침독서","#3E6B5E"],["A","예술활동 (악기·미술·버스킹)","#C9527A"],["S","오아시스 아침운동","#3D7EA6"]];
 let cls = "3-1", val = {R:0,A:0,S:0}, aType = "", dakkum = "";
 
 // 설정: 이 기기(브라우저)에만 저장 — 서버 없음
 function conf(){ return { url: localStorage.getItem("ras_url")||"", key: localStorage.getItem("ras_key")||"maehwa-2027" }; }
-function saveConf(){
+function saveConf(){ /* 저장 후 roster도 로드 */ 
   localStorage.setItem("ras_url", document.getElementById("url").value.trim());
   localStorage.setItem("ras_key", document.getElementById("key").value.trim()||"maehwa-2027");
-  checkConn();
+  checkConn(); if(typeof loadRoster==="function") loadRoster();
 }
 async function checkConn(){
   const c = conf(); const s = document.getElementById("status");
@@ -157,7 +173,7 @@ document.getElementById("url").value = conf().url;
 document.getElementById("key").value = conf().key;
 renderClasses(); renderCounters();
 document.getElementById("dakkumBox").style.display = DAKKUM.includes(cls)?"block":"none";
-if(conf().url) checkConn();
+if(conf().url){ checkConn(); loadRoster(); }
 </script>
 <script>if(window.ROLES)ROLES.badge();</script>
 </body>

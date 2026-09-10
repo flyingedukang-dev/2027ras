@@ -15,11 +15,7 @@ input,select,textarea{font:inherit;border:1px solid var(--line);border-radius:8p
 <script>
 const LANGS=[["ko","🇰🇷 한국어"],["vi","🇻🇳 Tiếng Việt"],["zh","🇨🇳 中文"],["ru","🇷🇺 Русский"],["en","🌐 English"]];
 let lang="ko",tr={};
-const ITEMS=[
- {id:1,title:"주간 편지를 가정 언어로 함께 보내기",detail:"담임 편지를 AI가 번역하고 담임이 확인해서 보냅니다. 어떤 언어부터 시작할까요?",from:"설문 자유응답(4건)",votes:{찬성:7,보류:1,반대:0}},
- {id:2,title:"매화 음악회 날짜를 한 달 전에 알리기",detail:"휴가를 내야 하는 가정이 있어 안내를 앞당깁니다.",from:"설문(중국어)",votes:{찬성:9,보류:0,반대:0}},
- {id:3,title:"주말 도서관 개방에 통역 도우미 배치",detail:"둘째·넷째 토요일 개방 시간에 서포터즈가 번갈아 자리합니다.",from:"서포터즈 제안",votes:{찬성:5,보류:3,반대:0}},
-];
+let ITEMS=[];
 let voted={};
 document.getElementById("langs").innerHTML=LANGS.map(l=>`<button class="mini" onclick="pick('${l[0]}')" id="l_${l[0]}">${l[1]}</button>`).join("");
 function pick(l){lang=l;LANGS.forEach(x=>{const b=document.getElementById("l_"+x[0]);b.style.background=x[0]===l?"#1F3A36":"";b.style.color=x[0]===l?"#fff":"";});render();if(l!=="ko")ITEMS.forEach(it=>translate(it));}
@@ -29,6 +25,18 @@ async function translate(it){
  try{const raw=await AICONF.ask(`다음 학부모 회의 안건을 ${L}로 번역. JSON만: {"title":"","detail":""}\n제목:${it.title}\n내용:${it.detail}`,400);tr[key]=JSON.parse(raw.replace(/```json|```/g,"").trim());render();}
  catch(e){tr[key]={title:it.title,detail:"(번역엔 AI 키가 필요해요 — 한국어로 표시)"};render();}
 }
+
+async function loadAgenda(){
+  if(!(window.RAS&&RAS.conf&&RAS.conf().url)){ render(); return; }
+  try{
+    const rows=await RAS.read("agenda");
+    if(rows&&rows.length){
+      ITEMS=rows.map(r=>({id:r.id,title:r["안건"],detail:r["설명"],from:r["출처"]||"",votes:{찬성:+r["찬성"]||0,보류:+r["보류"]||0,반대:+r["반대"]||0}}));
+    }
+  }catch(e){}
+  render();
+}
+
 function render(){
  document.getElementById("list").innerHTML=ITEMS.map(it=>{
   const d=lang==="ko"?it:(tr[it.id+"_"+lang]||it);
@@ -38,7 +46,7 @@ function render(){
    <div style="margin-top:8px;display:flex;gap:6px">${["찬성","보류","반대"].map(v=>`<button class="mini" style="${voted[it.id]===v?'background:#C9527A;color:#fff':''}" onclick="vote(${it.id},'${v}')">${v} ${it.votes[v]}</button>`).join("")}</div></div>`;
  }).join("");
 }
-function vote(id,v){if(voted[id])return;voted[id]=v;ITEMS.find(x=>x.id===id).votes[v]++;render();}
-pick("ko");
+function vote(id,v){if(voted[id])return;voted[id]=v;var it=ITEMS.find(function(x){return x.id===id;});if(it)it.votes[v]++;render();try{RAS.write("agenda","incField",{tab:"agenda",id:id,field:v});}catch(e){}}
+loadAgenda();pick("ko");
 AICONF.banner(document.getElementById("ai"),"안건 번역");
 </script></body></html>
