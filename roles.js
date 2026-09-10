@@ -2,9 +2,9 @@
    역할 3개: student(암호 없음) / teacher(담임 암호) / admin(교장 암호)
    ── 학교에서 아래 두 암호를 바꿔 쓰세요 ── */
 window.ROLES = (function(){
-  const TEACHER_PW = "maehwa-teacher";  // 담임 암호
-  const ADMIN_PW   = "maehwa-admin";    // 교장 암호
-  const PARENT_PW  = "maehwa-home";     // 학부모 공유 암호(가정통신문으로 안내)
+  const TEACHER_PW = "1234";  // 담임 암호
+  const ADMIN_PW   = "1234";    // 교장 암호
+  const PARENT_PW  = "1234";     // 학부모 공유 암호(가정통신문으로 안내)
 
   // 화면별 필요 권한
   const NEED = {
