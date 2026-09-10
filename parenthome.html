@@ -1,0 +1,34 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>매화 RAS-D · 학부모</title>
+<script src="roles.js"></script>
+<script>if(window.ROLES && ROLES.current()!=="parent"){location.href="gate.html";}</script>
+<style>
+:root{--ink:#1F3A36;--moss:#3E6B5E;--plum:#C9527A;--sky:#3D7EA6;--wood:#C4915C;--paper:#FBFAF7;--line:#E6E2DA}
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--paper);color:var(--ink)}
+.wrap{max-width:900px;margin:0 auto;padding:24px 18px 60px}
+header{text-align:center;padding:20px 0 6px}
+.rb{display:inline-block;background:var(--wood);color:#fff;font-weight:700;padding:5px 16px;border-radius:999px;font-size:14px}
+h1{font-size:26px;margin:12px 0 4px}.sub{color:#666;font-size:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-top:24px}
+.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px;text-decoration:none;color:inherit;transition:.15s;display:block;border-top:6px solid var(--wood)}
+.card:hover{transform:translateY(-3px);box-shadow:0 6px 18px rgba(31,58,54,.12)}
+.card .emoji{font-size:32px}.card h3{font-size:17px;margin:8px 0 4px}.card p{font-size:13px;color:#666}
+.hint{margin-top:22px;font-size:12px;color:#999;text-align:center;line-height:1.6}
+</style></head><body>
+<div class="wrap">
+<header>
+  <div class="rb">학부모</div>
+  <h1>매화 RAS-D · 학부모</h1>
+  <div class="sub">우리 아이 학교의 소식과 참여 창구예요.</div>
+</header>
+<div class="grid">
+  <a class="card" href="schoolhome.html"><div class="emoji">🏫</div><h3>우리 학교 소식</h3><p>RAS 실천학교 소개와 성과</p></a>
+  <a class="card" href="letter_view.html"><div class="emoji">✉️</div><h3>주간 편지</h3><p>우리 반 이번 주 소식(다국어)</p></a>
+  <a class="card" href="survey.html"><div class="emoji">📝</div><h3>진단 설문 참여</h3><p>학교에 대한 의견 남기기(5개 언어)</p></a>
+  <a class="card" href="supporters.html"><div class="emoji">🌏</div><h3>다꿈 서포터즈</h3><p>13개국 학부모 참여단</p></a>
+  <a class="card" href="map.html"><div class="emoji">🗺️</div><h3>가족 RAS 맵</h3><p>주말 가족 나들이 인증</p></a>
+</div>
+<div class="hint">학부모 화면에는 학생 개인이 특정되는 정보가 들어가지 않습니다. 학급·학교 단위 소식과 참여만 제공합니다.</div>
+</div>
+<script>if(window.ROLES)ROLES.badge();</script>
+</body></html>

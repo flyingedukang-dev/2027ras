@@ -1,0 +1,41 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>월요일 아침 RAS 날씨예보</title>
+<style>:root{--ink:#1F3A36;--moss:#3E6B5E;--plum:#C9527A;--sky:#3D7EA6;--paper:#FBFAF7;--line:#E6E2DA;--warn:#B8432F;--star:#F2C14E}
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--paper);color:var(--ink);max-width:820px;margin:0 auto;padding:16px}
+header{border-bottom:2px solid var(--ink);padding-bottom:10px}h1{font-size:20px}.sub{font-size:13px;color:var(--moss)}
+button{font:inherit;cursor:pointer}.btn{padding:8px 14px;border:none;border-radius:8px;background:var(--ink);color:#fff;font-weight:600}
+.mini{padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:#fff;font-size:13px}
+input,select,textarea{font:inherit;border:1px solid var(--line);border-radius:8px;padding:8px}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:10px}
+.grid{display:grid;gap:10px}.g4{grid-template-columns:repeat(4,1fr)}.g2{grid-template-columns:repeat(2,1fr)}
+@media(max-width:640px){.g4,.g2{grid-template-columns:repeat(2,1fr)}}</style><script src="roles.js"></script>
+<script>if(window.ROLES && !ROLES.guard()){throw new Error("redirect");}</script>
+</head><body>
+<header><h1>월요일 아침 RAS 날씨예보</h1><div class="sub">지난주 데이터를 방송부가 읽어 전교생에게</div></header>
+<div id="ai"></div>
+<div class="card" style="border:2px solid var(--star);text-align:center"><div id="big" style="font-size:44px"></div><div id="bign" style="font-weight:700"></div></div>
+<div class="grid g4" id="cards" style="margin-top:10px"></div>
+<div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><b>방송 대본</b><button class="btn" onclick="writeScript()">대본 만들기</button></div>
+ <div id="script" style="margin-top:8px;font-size:14px;color:#777">버튼을 누르면 이번 주 데이터로 1분 대본이 나옵니다.</div></div>
+<script src="ras-config.js"></script>
+<script src="ai-config.js"></script>
+<script>
+const CLS=["1-1","1-2","2-1","2-2","3-1","3-2","3-3","4-1","4-2","5-1","5-2","5-3","6-1"];
+const NOW={R:[93,90,86,84,80,77,72,85,82,88,85,81,90],A:[82,85,80,77,74,72,69,76,73,91,89,86,84],S:[96,94,91,89,72,68,64,85,84,82,80,78,86]};
+const PREV={R:[92,88,85,81,78,74,70,83,80,86,84,79,88],A:[80,84,78,75,72,70,66,74,71,90,88,85,82],S:[95,93,90,88,58,55,52,84,82,80,78,76,85]};
+const a3=(d,i)=>Math.round((d.R[i]+d.A[i]+d.S[i])/3);
+function wx(n,diff){if(n>=85)return["☀️","맑음"];if(n>=75)return["🌤️","구름 조금"];if(diff>=5)return["🌈","개는 중"];if(n>=65)return["☁️","흐림"];return["🌧️","비"];}
+const cards=CLS.map((c,i)=>{const now=a3(NOW,i),diff=now-a3(PREV,i);return {c,now,diff,w:wx(now,diff)};});
+const school=Math.round(cards.reduce((a,b)=>a+b.now,0)/13);
+document.getElementById("big").textContent=wx(school,0)[0];
+document.getElementById("bign").textContent="이번 주 매화초 날씨: "+wx(school,0)[1]+" (평균 "+school+"%)";
+document.getElementById("cards").innerHTML=cards.map(x=>`<div class="card" style="text-align:center;margin:0"><div style="font-size:26px">${x.w[0]}</div><div style="font-weight:600;font-size:14px">${x.c}</div><div style="font-size:11px;color:#777">${x.w[1]}</div><div style="font-size:11px;color:${x.diff>0?'#3E6B5E':x.diff<0?'#B8432F':'#999'}">${x.diff>0?'▲':x.diff<0?'▼':'–'}${Math.abs(x.diff)}</div></div>`).join("");
+const SAMPLE=`안녕하세요! 월요일 아침 RAS 날씨를 전해드립니다. 이번 주 우리 학교는 대체로 맑음, 평균 84%예요! 특히 3학년은 지난주보다 스포츠 꽃이 활짝 폈어요, 서포터즈 친구들 덕분이에요. 아직 봉오리인 반은 이번 주에 우리 다 같이 피워 봐요. 수요일 점심에는 학년 대항 줄넘기, 금요일에는 6학년 리코더 버스킹이 있어요. 폰 OFF! 매화 RAS ON!`;
+async function writeScript(){
+ const box=document.getElementById("script");box.textContent="대본 쓰는 중…";
+ const prompt=`너는 초등 방송부 학생이 읽을 'RAS 날씨예보' 대본 작가야. 전교 평균 ${school}%. 학급별: ${cards.map(x=>x.c+" "+x.w[1]+"("+x.now+"%, "+(x.diff>=0?"+":"")+x.diff+")").join(", ")}. 300자 안팎, 밝게, 순위 매기지 말고 낮은 반은 "같이 개게 도와주자" 톤, 마지막에 "폰 OFF! 매화 RAS ON!" 구호. 대본만.`;
+ try{const t=await AICONF.ask(prompt,700);box.innerHTML=`<textarea style="width:100%" rows="8">${t.trim()}</textarea>`;}
+ catch(e){box.innerHTML=`<div style="font-size:12px;color:#8a6d00;margin-bottom:6px">${e.message==="NO_KEY"?"AI 키가 없어 샘플 대본을 보여줍니다.":"AI 호출 실패 — 샘플 대본입니다."}</div><textarea style="width:100%" rows="8">${SAMPLE}</textarea>`;}
+}
+AICONF.banner(document.getElementById("ai"),"대본 생성");
+</script><script>if(window.ROLES)ROLES.badge();</script>
+</body></html>

@@ -1,0 +1,72 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>매화 RAS-D · 홈</title>
+<script src="roles.js"></script>
+<script>if(window.ROLES && !ROLES.current()){location.href="gate.html";}</script>
+<style>
+:root{--ink:#1F3A36;--moss:#3E6B5E;--plum:#C9527A;--sky:#3D7EA6;--paper:#FBFAF7;--line:#E6E2DA;--star:#F2C14E}
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--paper);color:var(--ink)}
+.wrap{max-width:900px;margin:0 auto;padding:24px 18px 60px}
+header{text-align:center;padding:20px 0 6px}
+.role-badge{display:inline-block;color:#fff;font-weight:700;padding:5px 16px;border-radius:999px;font-size:14px}
+h1{font-size:26px;margin:12px 0 4px}.sub{color:#666;font-size:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-top:24px}
+.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px;text-decoration:none;color:inherit;transition:.15s;display:block;border-top:6px solid var(--line)}
+.card:hover{transform:translateY(-3px);box-shadow:0 6px 18px rgba(31,58,54,.12)}
+.card .emoji{font-size:32px}
+.card h3{font-size:17px;margin:8px 0 4px}
+.card p{font-size:13px;color:#666}
+.card.r{border-top-color:var(--moss)}.card.a{border-top-color:var(--plum)}.card.s{border-top-color:var(--sky)}.card.k{border-top-color:var(--ink)}
+.hint{margin-top:22px;font-size:12px;color:#999;text-align:center;line-height:1.6}
+</style></head><body>
+<div class="wrap">
+<header>
+  <div class="role-badge" id="rb"></div>
+  <h1>매화 RAS-D</h1>
+  <div class="sub" id="sub"></div>
+</header>
+<div class="grid" id="grid"></div>
+<div class="hint" id="hint"></div>
+</div>
+<script>
+const TOOLS={
+ student:{
+  color:"#3D7EA6",sub:"내가 참여하는 활동들이에요.",
+  hint:"학생은 암호 없이 이 활동들을 쓸 수 있어요.",
+  cards:[
+   ["bookshelf.html","📚","우리 반 책장","친구들 추천으로 책 고르기","r"],
+   ["budget.html","💰","우리가 쓰는 예산","데이터 보고 예산 제안·투표","s"],
+   ["board.html","🌱","우리가 만드는 RAS","활동 제안하고 후기 남기기","a"],
+   ["kidsmeeting.html","🙋","어린이 경영회의","데이터 읽고 교장님께 제안","k"],
+   ["survey.html","📝","RAS 진단 설문","우리 학교 어떤지 답하기","k"],
+  ]},
+ teacher:{
+  color:"#3E6B5E",sub:"우리 반 운영에 쓰는 도구예요.",
+  hint:"담임 화면입니다. 우리 반 데이터를 입력하고 관리합니다.",
+  cards:[
+   ["input.html","✅","오늘의 RAS 체크","우리 반 참여 인원 30초 입력","s"],
+   ["bookshelf.html","📚","우리 반 책장 관리","학생 책장 보기·검토","r"],
+   ["letter.html","✉️","주간 편지","우리 반 데이터로 학부모 편지","a"],
+   ["survey.html","📝","진단 설문","교사 진단 응답","k"],
+  ]},
+ admin:{
+  color:"#C9527A",sub:"학교 전체를 보고 결정하는 화면이에요.",
+  hint:"교장 화면입니다. AI는 제안만 하고 결정은 사람이 합니다.",
+  cards:[
+   ["dashboard.html","📊","경영 대시보드","학급 현황 + AI 보좌관","k"],
+   ["journal.html","📖","교장의 결정 일지","제안·결정·이유 기록·공개","a"],
+   ["tree.html","🌸","현관 매화나무","학급 실천 현황 상징","r"],
+   ["analyzer.html","🗣️","설문 자유응답","다국어 목소리 분석","s"],
+   ["cafe.html","☕","데이터 카페","교사 PLC 월 1회","k"],
+   ["weather.html","🌤️","RAS 날씨예보","방송용 학급 날씨·대본","s"],
+  ]},
+};
+const r=ROLES.current()||"student";
+if(r==="parent"){location.href="parenthome.html";}
+const t=TOOLS[r]||TOOLS.student;
+document.getElementById("rb").textContent={student:"학생",teacher:"담임",admin:"교장"}[r];
+document.getElementById("rb").style.background=t.color;
+document.getElementById("sub").textContent=t.sub;
+document.getElementById("hint").textContent=t.hint;
+document.getElementById("grid").innerHTML=t.cards.map(c=>
+ `<a class="card ${c[4]}" href="${c[0]}"><div class="emoji">${c[1]}</div><h3>${c[2]}</h3><p>${c[3]}</p></a>`).join("");
+</script></body></html>

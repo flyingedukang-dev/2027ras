@@ -1,0 +1,36 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>어린이 경영회의</title>
+<style>:root{--ink:#1F3A36;--moss:#3E6B5E;--plum:#C9527A;--sky:#3D7EA6;--paper:#FBFAF7;--line:#E6E2DA;--warn:#B8432F;--star:#F2C14E}
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--paper);color:var(--ink);max-width:820px;margin:0 auto;padding:16px}
+header{border-bottom:2px solid var(--ink);padding-bottom:10px}h1{font-size:20px}.sub{font-size:13px;color:var(--moss)}
+button{font:inherit;cursor:pointer}.btn{padding:8px 14px;border:none;border-radius:8px;background:var(--ink);color:#fff;font-weight:600}
+.mini{padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:#fff;font-size:13px}
+input,select,textarea{font:inherit;border:1px solid var(--line);border-radius:8px;padding:8px}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:10px}
+.grid{display:grid;gap:10px}.g3{grid-template-columns:repeat(3,1fr)}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{border:1px solid var(--line);padding:6px 8px;text-align:center}th{background:#EEF2F0}
+@media(max-width:640px){.g3{grid-template-columns:1fr}}</style></head><body>
+<header><h1>어린이 경영회의</h1><div class="sub">학생이 데이터를 읽고 별이에게 묻고 교장께 제안</div></header>
+<div id="ai"></div>
+<div class="card"><b>이번 주 우리 학교</b>
+ <table style="margin-top:8px"><tr><th>반</th><th>독서</th><th>예술</th><th>스포츠</th></tr>
+ <tr><td>3-3</td><td>72</td><td style="color:#B8432F">69🌱</td><td style="color:#B8432F">64🌱</td></tr>
+ <tr><td>5-2</td><td>85</td><td>89</td><td>80</td></tr>
+ <tr><td>6-1</td><td>90</td><td>84</td><td>86</td></tr></table>
+ <div class="sub" style="margin-top:6px">🌱 봉오리(70% 아래) · 순위표 아니에요, 같이 도울 곳이에요</div></div>
+<div class="card" style="border:2px solid var(--star)"><b>별이에게 물어보기</b>
+ <div style="display:flex;gap:6px;margin-top:6px"><input id="q" style="flex:1" placeholder="예: 3학년 스포츠는 왜 낮아요?"><button class="btn" onclick="ask()">묻기</button></div>
+ <div style="margin-top:6px">${["3학년 스포츠는 왜 낮아요?","우리가 도울 수 있는 건?"].map(s=>`<button class="mini" onclick="document.getElementById('q').value='${s}';ask()">${s}</button>`).join(" ")}</div>
+ <div id="ans" style="margin-top:10px"></div></div>
+<script src="ras-config.js"></script>
+<script src="ai-config.js"></script>
+<script>
+const SAMPLE="3학년 스포츠 꽃이 조금 작은 건 비 오는 날 운동장을 못 써서일 수도 있어요. 우리가 실내에서 같이 할 수 있는 놀이를 제안하면 도움이 될 거예요. 교장선생님께 이렇게 여쭤보면 어때요? '비 오는 날에도 3학년이 체육관을 쓸 수 있을까요?'";
+async function ask(){
+ const q=document.getElementById("q").value;if(!q)return;
+ document.getElementById("ans").innerHTML='<p class="sub">별이가 생각 중…</p>';
+ const prompt=`너는 초등 학생자치회를 돕는 AI '별이'. 어린이 눈높이로 3문장 안에, 특정 반을 나쁘게 말하지 말고 원인은 "~일 수도 있어요"로 가설로만. 마지막에 교장선생님께 물어볼 질문 하나 제안. 데이터: 3-3 스포츠 64% 예술 69%로 낮음, 비 온 주. 학생 질문: "${q}"`;
+ try{const t=await AICONF.ask(prompt,400);document.getElementById("ans").innerHTML=`<div style="background:#FFF6D6;border-radius:8px;padding:10px;font-size:14px">⭐ ${t.trim()}</div>`;}
+ catch(e){document.getElementById("ans").innerHTML=`<div class="sub" style="color:#8a6d00">${e.message==="NO_KEY"?"(샘플)":"(샘플)"}</div><div style="background:#FFF6D6;border-radius:8px;padding:10px;font-size:14px">⭐ ${SAMPLE}</div>`;}
+}
+AICONF.banner(document.getElementById("ai"),"별이 설명");
+</script></body></html>

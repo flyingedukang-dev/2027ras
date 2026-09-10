@@ -1,0 +1,44 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>다꿈 서포터즈</title>
+<style>:root{--ink:#1F3A36;--moss:#3E6B5E;--plum:#C9527A;--sky:#3D7EA6;--paper:#FBFAF7;--line:#E6E2DA;--warn:#B8432F;--star:#F2C14E}
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--paper);color:var(--ink);max-width:820px;margin:0 auto;padding:16px}
+header{border-bottom:2px solid var(--ink);padding-bottom:10px}h1{font-size:20px}.sub{font-size:13px;color:var(--moss)}
+button{font:inherit;cursor:pointer}.btn{padding:8px 14px;border:none;border-radius:8px;background:var(--ink);color:#fff;font-weight:600}
+.mini{padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:#fff;font-size:13px}
+input,select,textarea{font:inherit;border:1px solid var(--line);border-radius:8px;padding:8px}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:10px}</style></head><body>
+<header><h1>다꿈 서포터즈</h1><div class="sub">13개국 학부모가 학교 결정에 함께 · 안건을 내 언어로</div></header>
+<div id="ai"></div>
+<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:10px" id="langs"></div>
+<div id="list"></div>
+<script src="ras-config.js"></script>
+<script src="ai-config.js"></script>
+<script>
+const LANGS=[["ko","🇰🇷 한국어"],["vi","🇻🇳 Tiếng Việt"],["zh","🇨🇳 中文"],["ru","🇷🇺 Русский"],["en","🌐 English"]];
+let lang="ko",tr={};
+const ITEMS=[
+ {id:1,title:"주간 편지를 가정 언어로 함께 보내기",detail:"담임 편지를 AI가 번역하고 담임이 확인해서 보냅니다. 어떤 언어부터 시작할까요?",from:"설문 자유응답(4건)",votes:{찬성:7,보류:1,반대:0}},
+ {id:2,title:"매화 음악회 날짜를 한 달 전에 알리기",detail:"휴가를 내야 하는 가정이 있어 안내를 앞당깁니다.",from:"설문(중국어)",votes:{찬성:9,보류:0,반대:0}},
+ {id:3,title:"주말 도서관 개방에 통역 도우미 배치",detail:"둘째·넷째 토요일 개방 시간에 서포터즈가 번갈아 자리합니다.",from:"서포터즈 제안",votes:{찬성:5,보류:3,반대:0}},
+];
+let voted={};
+document.getElementById("langs").innerHTML=LANGS.map(l=>`<button class="mini" onclick="pick('${l[0]}')" id="l_${l[0]}">${l[1]}</button>`).join("");
+function pick(l){lang=l;LANGS.forEach(x=>{const b=document.getElementById("l_"+x[0]);b.style.background=x[0]===l?"#1F3A36":"";b.style.color=x[0]===l?"#fff":"";});render();if(l!=="ko")ITEMS.forEach(it=>translate(it));}
+async function translate(it){
+ const key=it.id+"_"+lang;if(tr[key])return;
+ const L=LANGS.find(x=>x[0]===lang)[1];
+ try{const raw=await AICONF.ask(`다음 학부모 회의 안건을 ${L}로 번역. JSON만: {"title":"","detail":""}\n제목:${it.title}\n내용:${it.detail}`,400);tr[key]=JSON.parse(raw.replace(/```json|```/g,"").trim());render();}
+ catch(e){tr[key]={title:it.title,detail:"(번역엔 AI 키가 필요해요 — 한국어로 표시)"};render();}
+}
+function render(){
+ document.getElementById("list").innerHTML=ITEMS.map(it=>{
+  const d=lang==="ko"?it:(tr[it.id+"_"+lang]||it);
+  return `<div class="card" style="border-left:6px solid var(--star)"><div class="sub">${it.from}</div>
+   <div style="font-weight:600;margin-top:2px">${d.title}</div><div style="font-size:14px;margin-top:4px">${d.detail}</div>
+   ${lang!=="ko"?`<div class="sub" style="color:#999;margin-top:2px">${it.title}</div>`:""}
+   <div style="margin-top:8px;display:flex;gap:6px">${["찬성","보류","반대"].map(v=>`<button class="mini" style="${voted[it.id]===v?'background:#C9527A;color:#fff':''}" onclick="vote(${it.id},'${v}')">${v} ${it.votes[v]}</button>`).join("")}</div></div>`;
+ }).join("");
+}
+function vote(id,v){if(voted[id])return;voted[id]=v;ITEMS.find(x=>x.id===id).votes[v]++;render();}
+pick("ko");
+AICONF.banner(document.getElementById("ai"),"안건 번역");
+</script></body></html>

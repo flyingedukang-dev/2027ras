@@ -1,0 +1,41 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>주간 편지 · 학부모</title>
+<script src="roles.js"></script>
+<script>if(window.ROLES && !ROLES.guard()){throw new Error("redirect");}</script>
+<script src="ras-config.js"></script>
+<style>
+:root{--ink:#1F3A36;--moss:#3E6B5E;--wood:#C4915C;--paper:#FBFAF7;--line:#E6E2DA}
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--paper);color:var(--ink);max-width:680px;margin:0 auto;padding:16px}
+header{border-bottom:2px solid var(--ink);padding-bottom:10px}h1{font-size:20px}.sub{font-size:13px;color:var(--moss)}
+.bar{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+select{font:inherit;border:1px solid var(--line);border-radius:8px;padding:8px}
+.letter{background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px;margin-top:12px;line-height:1.8;white-space:pre-wrap}
+.empty{color:#999;text-align:center;padding:30px}
+</style></head><body>
+<div id="conn" style="margin-bottom:10px"></div>
+<header><h1>우리 반 주간 편지</h1><div class="sub">담임 선생님이 보낸 이번 주 소식이에요.</div></header>
+<div class="bar">우리 아이 반 <select id="cls"></select></div>
+<div id="out"></div>
+<script>
+const CLS=["1-1","1-2","2-1","2-2","3-1","3-2","3-3","4-1","4-2","5-1","5-2","5-3","6-1"];
+document.getElementById("cls").innerHTML=CLS.map(c=>`<option>${c}</option>`).join("");
+document.getElementById("cls").value="3-1";
+document.getElementById("cls").onchange=load;
+
+async function load(){
+  const out=document.getElementById("out");
+  out.innerHTML='<div class="empty">불러오는 중…</div>';
+  try{
+    const rows = await RAS.read("letters");   // letters 탭: 학급|시각|한국어|번역들
+    const cls=document.getElementById("cls").value;
+    const mine=rows.filter(r=>String(r["학급"]).trim()===cls);
+    if(!mine.length){ out.innerHTML='<div class="empty">아직 이번 주 편지가 없어요.</div>'; return; }
+    const last=mine[mine.length-1];
+    out.innerHTML=`<div class="letter">${(last["한국어"]||last["내용"]||"").replace(/</g,"&lt;")}</div>`;
+  }catch(e){ out.innerHTML='<div class="empty">편지를 불러오지 못했어요. 학교 연결을 확인해 주세요.</div>'; }
+}
+if(window.RAS&&RAS.banner)RAS.banner(document.getElementById("conn"));
+if(RAS.conf&&RAS.conf().url) load(); else document.getElementById("out").innerHTML='<div class="empty">학교 시스템에 연결되면 편지가 보입니다.</div>';
+</script>
+<script>if(window.ROLES)ROLES.badge();</script>
+</body></html>

@@ -1,0 +1,50 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>매화 RAS 진단 — 실데이터</title>
+<style>
+:root{--ink:#1F3A36;--moss:#3E6B5E;--plum:#C9527A;--sky:#3D7EA6;--paper:#FBFAF7;--line:#E6E2DA;--star:#F2C14E}
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--paper);color:var(--ink);max-width:480px;margin:0 auto;padding:16px}
+header{border-bottom:2px solid var(--ink);padding-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+h1{font-size:19px}select,input,textarea{font:inherit;border:1px solid var(--line);border-radius:8px;padding:6px}
+.role{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:20px}.role button{padding:22px 0;border-radius:12px;border:2px solid var(--line);background:#fff;font:inherit;font-size:17px;font-weight:600;cursor:pointer}
+.q{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:12px}
+.faces{display:flex;gap:4px;margin-top:8px}.faces button{flex:1;border:1px solid var(--line);border-radius:8px;padding:6px 0;background:var(--paper);cursor:pointer;display:flex;flex-direction:column;align-items:center}
+.save{width:100%;padding:16px;border:none;border-radius:12px;background:var(--ink);color:#fff;font-size:17px;font-weight:700;margin-top:14px;cursor:pointer}
+.bar{height:6px;border-radius:3px;background:var(--line);margin:12px 0}.bar>div{height:6px;border-radius:3px;background:var(--plum);transition:width .3s}
+.done{background:#fff;border:2px solid var(--star);border-radius:12px;padding:20px;margin-top:16px;text-align:center}
+</style></head><body>
+<header><h1 id="title">매화 RAS 진단</h1><select id="lang" onchange="setLang(this.value)"><option value="ko">한국어</option><option value="en">English</option><option value="zh">中文</option><option value="vi">Tiếng Việt</option><option value="ru">Русский</option></select></header>
+<div id="conn" style="margin-top:10px"></div>
+<div id="app"></div>
+<script src="ras-config.js"></script>
+<script>
+const Q=[["교육과정","수업 시간에 독서·예술·스포츠 교육이 고르게 들어 있다","수업 시간에 책 읽기, 음악·미술, 운동을 골고루 해요","수업 시간에 독서·예술·스포츠 활동이 고르게 이루어진다"],
+["방과후","방과후 프로그램에 독서·예술·스포츠가 고르게 운영된다","방과후에도 책·예술·운동 활동을 골라서 할 수 있어요","방과후 프로그램에 독서·예술·스포츠가 고르게 있다"],
+["일상 운영","특정 행사·시기에 몰리지 않고 연중 꾸준히 운영된다","행사 때만이 아니라 평소에도 계속 해요","행사 때만이 아니라 평소에도 꾸준히 이루어진다"],
+["참여 시간","아침·쉬는시간·점심·방과후에 참여 기회가 있다","아침, 쉬는 시간, 점심시간에도 할 수 있어요","아이가 하루 중 여러 시간에 참여할 기회가 있다"],
+["공간 접근","도서관·음악실·체육 공간이 상시 개방되어 있다","도서관, 음악실, 체육관에 편하게 갈 수 있어요","아이가 공간을 자유롭게 쓴다"],
+["학생 주도","학생이 기획·운영하는 RAS 활동이 있다","우리가 직접 정하고 만드는 활동이 있어요","학생들이 직접 기획하는 활동이 있다"],
+["가정 연계","가정에서 이어지도록 학부모 참여 기회가 있다","집에서도 가족과 같이 책 읽기·운동을 해요","가정에서도 함께 참여할 기회를 학교가 마련한다"],
+["지역 연계","지역 인적·물적 자원을 연계한다","학교 밖 도서관·공연·운동 시설에 가 봤어요","학교가 지역 기관과 연계한다"],
+["협력·환류","학교·가정·지역이 결과를 공유하고 협력한다","활동 결과를 알려 주고 우리 의견을 물어봐요","활동 결과를 공유받고 의견을 낼 기회가 있다"]];
+const SCALE={ko:["전혀","별로","보통","그런편","정말"],en:["No","Not really","So-so","Mostly","Yes"],zh:["完全不","不太","一般","比较是","非常"],vi:["Không","Ít","Bình thường","Khá","Rất"],ru:["Нет","Не очень","Средне","Скорее","Да"]};
+const FACES=["😞","🙁","😐","🙂","😄"];
+let lang="ko",role=null,rk=0,ans=Array(9).fill(0),sent=false;
+function setLang(l){lang=l;render();}
+function render(){
+  const app=document.getElementById("app");
+  if(!role){app.innerHTML=`<div class="role">${["교사","학생","학부모"].map((n,i)=>`<button onclick="pick(${i},'${n}')">${n}</button>`).join("")}</div><p style="font-size:12px;color:#777;margin-top:12px">익명이며 RAS 운영 개선에만 사용합니다. 약 2분.</p>`;return;}
+  if(sent){app.innerHTML=`<div class="done"><div style="font-size:40px">🌸</div><b>제출했어요. 고맙습니다!</b><div style="font-size:13px;color:#777;margin-top:6px">응답은 대상별로 모여 학교 대시보드 진단에 반영됩니다.</div><button class="save" style="background:#fff;color:#1F3A36;border:2px solid #1F3A36" onclick="reset()">다시 하기</button></div>`;return;}
+  const filled=ans.filter(Boolean).length;
+  app.innerHTML=`<div class="bar"><div style="width:${filled/9*100}%"></div></div>`+Q.map((q,i)=>`<div class="q"><div style="font-size:12px;color:#3E6B5E">${i+1}/9 · ${q[0]}</div><div style="font-size:14px;font-weight:500;margin-top:4px">${q[rk+1]}</div>
+    <div class="faces">${FACES.map((f,v)=>`<button onclick="setA(${i},${v+1})" style="${ans[i]===v+1?"background:#C9527A;color:#fff":""}"><span style="font-size:20px">${role==="학생"?f:v+1}</span><span style="font-size:9px">${SCALE[lang][v]}</span></button>`).join("")}</div></div>`).join("")
+    +`<button class="save" onclick="submit()" style="${filled<9?"background:#bbb":""}">제출${filled<9?" ("+(9-filled)+")":""}</button>`;
+}
+function pick(i,n){role=n;rk=i;render();}
+function setA(i,v){ans[i]=v;render();}
+function reset(){role=null;ans=Array(9).fill(0);sent=false;render();}
+async function submit(){if(ans.filter(Boolean).length<9)return;
+  const row={"시각":new Date().toLocaleString("ko-KR"),"대상":role,"언어":lang};Q.forEach((q,i)=>row["Q"+(i+1)]=ans[i]);row["자유응답"]="";
+  await RAS.write("survey","append",row);sent=true;render();
+}
+const conn=document.getElementById("conn");RAS.banner(conn);conn._onReady=()=>{};render();
+</script></body></html>

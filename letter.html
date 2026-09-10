@@ -1,0 +1,67 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>우리 반 RAS 주간 편지</title>
+<style>:root{--ink:#1F3A36;--moss:#3E6B5E;--plum:#C9527A;--sky:#3D7EA6;--paper:#FBFAF7;--line:#E6E2DA;--warn:#B8432F;--star:#F2C14E}
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--paper);color:var(--ink);max-width:820px;margin:0 auto;padding:16px}
+header{border-bottom:2px solid var(--ink);padding-bottom:10px}h1{font-size:20px}.sub{font-size:13px;color:var(--moss)}
+button{font:inherit;cursor:pointer}.btn{padding:8px 14px;border:none;border-radius:8px;background:var(--ink);color:#fff;font-weight:600}
+.mini{padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:#fff;font-size:13px}
+input,select,textarea{font:inherit;border:1px solid var(--line);border-radius:8px;padding:8px}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:10px}
+.grid{display:grid;gap:10px}.g3{grid-template-columns:repeat(3,1fr)}.g2{grid-template-columns:repeat(2,1fr)}
+@media(max-width:640px){.g3,.g2{grid-template-columns:1fr}}</style><script src="roles.js"></script>
+<script>if(window.ROLES && !ROLES.guard()){throw new Error("redirect");}</script>
+</head><body>
+<header><h1>우리 반 RAS 주간 편지</h1><div class="sub">데이터+메모로 편지 초안, 다꿈누리 가정 언어로 번역</div></header>
+<div id="ai"></div>
+<div class="card">
+ <div style="display:flex;gap:6px;flex-wrap:wrap"><select id="cls"></select>
+  <span class="sub" id="wk" style="align-self:center"></span></div>
+ <textarea id="notes" rows="3" style="width:100%;margin-top:8px" placeholder="이번 주 메모">이번 주 아침독서 '마당을 나온 암탉' 완독. 수요일 비로 실내 줄넘기. 금요일 버스킹 3명 참여. 다음 주 월요일 오아시스 8시20분.</textarea>
+ <input id="hw" style="width:100%;margin-top:6px" value="주말에 가족과 20분 산책하고 본 것 이야기 나누기">
+ <div style="margin-top:6px" class="sub">함께 보낼 언어</div>
+ <div id="langs" style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px"></div>
+ <button class="btn" style="margin-top:8px;width:100%" onclick="gen()">편지 초안 만들기</button></div>
+<div id="out"></div>
+<script src="ras-config.js"></script>
+<script src="ai-config.js"></script>
+<script>
+const CLS=["1-1","1-2","2-1","2-2","3-1","3-2","3-3","4-1","4-2","5-1","5-2","5-3","6-1"];
+const WEEK={R:[93,90,86,84,80,77,72,85,82,88,85,81,90],A:[82,85,80,77,74,72,69,76,73,91,89,86,84],S:[96,94,91,89,72,68,64,85,84,82,80,78,86]};
+const LANGS=[["en","English"],["zh","中文"],["vi","Tiếng Việt"],["ru","Русский"]];let picked=["vi"];
+document.getElementById("cls").innerHTML=CLS.map(c=>`<option>${c}</option>`).join("");
+document.getElementById("cls").value="3-1";
+document.getElementById("langs").innerHTML=LANGS.map(l=>`<button class="mini lb" data-l="${l[0]}" onclick="tog('${l[0]}',this)" style="${picked.includes(l[0])?'background:#3D7EA6;color:#fff':''}">${l[1]}</button>`).join("");
+function upd(){const i=CLS.indexOf(document.getElementById("cls").value);document.getElementById("wk").textContent=`이번 주 R ${WEEK.R[i]} · A ${WEEK.A[i]} · S ${WEEK.S[i]}`;}
+document.getElementById("cls").onchange=upd;upd();
+function tog(l,b){picked=picked.includes(l)?picked.filter(x=>x!==l):[...picked,l];b.style.background=picked.includes(l)?"#3D7EA6":"";b.style.color=picked.includes(l)?"#fff":"";}
+const SAMPLE={ko:"안녕하세요, 학부모님. 이번 주 우리 3-1반은 아침독서로 '마당을 나온 암탉'을 함께 다 읽었고, 비 온 수요일에는 교실에서 줄넘기로 몸을 움직였습니다. 금요일 버스킹 무대에는 우리 반 친구 세 명이 용기를 냈어요. 주말에는 가족과 20분 산책하며 본 것을 이야기 나눠 주세요. 다음 주 월요일 아침 8시 20분 오아시스 아침운동으로 한 주를 시작합니다. 늘 함께해 주셔서 감사합니다. — 3-1 담임 드림",translations:{vi:"(Tiếng Việt) Kính gửi quý phụ huynh, tuần này lớp 3-1 đã cùng đọc xong sách buổi sáng..."}};
+async function gen(){
+ const i=CLS.indexOf(document.getElementById("cls").value);
+ document.getElementById("out").innerHTML='<p class="sub" style="margin-top:10px">편지 쓰는 중…</p>';
+ const prompt=`너는 초등 담임을 돕는 AI. ${CLS[i]}반 이번 주 참여율 독서 ${WEEK.R[i]}% 예술 ${WEEK.A[i]}% 스포츠 ${WEEK.S[i]}%. 메모: ${document.getElementById("notes").value}. 가정 과제: ${document.getElementById("hw").value}. 학부모가 1분에 읽을 250자 존댓말 한국어 편지(수치는 한 번, 특정 아동 이름 없이). 그리고 ${picked.join(",")} 언어로 번역. JSON만: {"ko":"","translations":{"vi":""}}`;
+ try{const raw=await AICONF.ask(prompt,1200);show(JSON.parse(raw.replace(/```json|```/g,"").trim()));}
+ catch(e){show(SAMPLE,e.message);}
+}
+function show(d,err){
+ let tabs=["ko",...Object.keys(d.translations||{})];
+ document.getElementById("out").innerHTML=(err?`<div class="sub" style="color:#8a6d00;margin-top:8px">${err==="NO_KEY"?"AI 키 없음 — 샘플":"AI 실패 — 샘플"}</div>`:"")+
+  `<div class="card" style="border:2px solid var(--star)"><div id="tabs" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px"></div><textarea id="body" rows="9" style="width:100%"></textarea></div>`;
+ const T=document.getElementById("tabs");
+ T.innerHTML=tabs.map((t,k)=>`<button class="mini" onclick="pick('${t}',${JSON.stringify(JSON.stringify(d)).replace(/"/g,'&quot;')})">${t==="ko"?"한국어":t}</button>`).join("");
+ window._d=d;pick("ko");
+ var sb=document.getElementById("send");
+ if(sb) sb.onclick=async function(){
+   var i=CLS.indexOf(document.getElementById("cls").value);
+   var ko=document.getElementById("body").value;
+   sb.textContent="보내는 중…"; sb.disabled=true;
+   try{
+     if(!(window.RAS&&RAS.conf&&RAS.conf().url)){throw new Error("학교 연결이 필요합니다");}
+     await RAS.write("letters","append",{ "학급":CLS[i], "시각":new Date().toLocaleString("ko-KR"), "한국어":ko, "번역":JSON.stringify(window._d.translations||{}) });
+     document.getElementById("sendmsg").textContent="학부모 화면에 게시되었습니다.";
+     sb.textContent="보냈어요 ✓";
+   }catch(e){ sb.textContent="학부모에게 보내기 (학부모 화면에 게시)"; sb.disabled=false; document.getElementById("sendmsg").textContent="실패: "+e.message; }
+ };
+}
+function pick(t){document.getElementById("body").value=t==="ko"?window._d.ko:window._d.translations[t];}
+AICONF.banner(document.getElementById("ai"),"편지 생성");
+</script><script>if(window.ROLES)ROLES.badge();</script>
+</body></html>

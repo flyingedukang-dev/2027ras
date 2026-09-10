@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>매화 RAS 경영 대시보드 — 실데이터</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root{--ink:#1F3A36;--moss:#3E6B5E;--plum:#C9527A;--sky:#3D7EA6;--paper:#FBFAF7;--line:#E6E2DA;--warn:#B8432F;--star:#F2C14E}
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--paper);color:var(--ink);padding:16px}
+.wrap{max-width:960px;margin:0 auto}header{border-bottom:2px solid var(--ink);padding-bottom:10px;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:8px}
+h1{font-size:22px}.sub{font-size:13px;color:var(--moss)}
+.sum{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:16px}
+.sum div{background:#fff;border-radius:10px;padding:12px}.sum .n{font-size:30px;font-weight:700}.sum .l{font-size:12px}
+.warnbox{margin-top:12px;background:#FCEFE9;border:1px solid var(--warn);border-radius:10px;padding:10px;font-size:14px}
+section{margin-top:20px}h2{font-size:17px;margin-bottom:8px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px}
+.cls{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:6px}
+.cbox{border:1px solid var(--line);border-radius:8px;padding:6px;font-size:12px}
+.bar{height:6px;border-radius:3px;background:var(--line);margin:2px 0}.bar>div{height:6px;border-radius:3px}
+.ai{background:#fff;border:2px solid var(--star);border-radius:12px;padding:16px;margin-top:20px}
+button{font:inherit;cursor:pointer}
+.btn{padding:8px 16px;border:none;border-radius:8px;background:var(--ink);color:#fff;font-weight:600}
+.mini{padding:4px 10px;border-radius:6px;border:1px solid var(--line);background:#fff;font-size:13px}
+textarea,input,select{font:inherit;border:1px solid var(--line);border-radius:8px;padding:8px}
+.item{border:1px solid var(--line);border-radius:10px;padding:12px;margin-top:10px}
+.empty{background:#fff;border:1px dashed var(--line);border-radius:12px;padding:30px;text-align:center;color:#999;margin-top:16px}
+@media(max-width:700px){.grid{grid-template-columns:1fr}.sum{grid-template-columns:repeat(2,1fr)}}
+</style><script src="roles.js"></script>
+<script>if(window.ROLES && !ROLES.guard()){throw new Error("redirect");}</script>
+</head><body><div class="wrap">
+<header><div><h1>매화 RAS 경영 대시보드</h1><div class="sub">수원매화초 · 담임 입력(daily)을 실시간으로 읽습니다</div></div>
+<button class="mini" onclick="load()">새로고침</button></header>
+<div id="conn" style="margin-top:10px"></div>
+<div id="app"></div>
+</div>
+<script src="ras-config.js"></script>
+<script src="ai-config.js"></script>
+<script>
+const CLASSES=["1-1","1-2","2-1","2-2","3-1","3-2","3-3","4-1","4-2","5-1","5-2","5-3","6-1"];
+const DAKKUM=["3-1","4-2","5-1","6-1"];
+const COL={R:"#3E6B5E",A:"#C9527A",S:"#3D7EA6"},NAME={R:"독서",A:"예술문화",S:"스포츠"};
+let trendChart=null;
+
+function num(v){ if(v==null) return 0; if(typeof v==="number") return v; var n=parseFloat(String(v).replace(/[^0-9.\-]/g,"")); return isNaN(n)?0:n; }
+function pctRow(r){ const t=num(r["정원"])||1; return {R:Math.round(num(r["R"])/t*100),A:Math.round(num(r["A"])/t*100),S:Math.round(num(r["S"])/t*100)}; }
+// 주(월요일) 키
+function _ymd(d){
+  if(d==null) return "";
+  if(typeof d==="string"){
+    var m=d.match(/(\d{4})[-.\/]\s*(\d{1,2})[-.\/]\s*(\d{1,2})/);
+    if(m) return m[1]+"-"+String(m[2]).padStart(2,"0")+"-"+String(m[3]).padStart(2,"0");
+    var dt=new Date(d); if(!isNaN(dt)) return dt.getFullYear()+"-"+String(dt.getMonth()+1).padStart(2,"0")+"-"+String(dt.getDate()).padStart(2,"0");
+    return "";
+  }
+  var dt=new Date(d);
+  return dt.getFullYear()+"-"+String(dt.getMonth()+1).padStart(2,"0")+"-"+String(dt.getDate()).padStart(2,"0");
+}
+function weekKey(d){
+  var s=_ymd(d); if(!s) return "";
+  var p=s.split("-"); var dt=new Date(Date.UTC(+p[0],+p[1]-1,+p[2]));
+  var day=(dt.getUTCDay()+6)%7;
+  dt.setUTCDate(dt.getUTCDate()-day);
+  return dt.toISOString().slice(0,10);
+}
+
+function aggregate(rows){
+  // 최신 주 vs 직전 주, 학급별 평균
+  const byWeek={};
+  rows.forEach(r=>{ if(!r["날짜"])return; const w=weekKey(r["날짜"]); (byWeek[w]=byWeek[w]||[]).push(r); });
+  const weeks=Object.keys(byWeek).sort();
+  const perWeekClass=(w)=>{ const m={}; (byWeek[w]||[]).forEach(r=>{ const p=pctRow(r); const c=String(r["학급"]).trim(); if(!m[c])m[c]={R:[],A:[],S:[],student:0}; m[c].R.push(p.R);m[c].A.push(p.A);m[c].S.push(p.S); if(r["학생기획"]==="Y")m[c].student++; });
+    const out={}; CLASSES.forEach(c=>{ const x=m[c]; out[c]=x?{R:avg(x.R),A:avg(x.A),S:avg(x.S),student:x.student}:{R:0,A:0,S:0,student:0}; }); return out; };
+  return { weeks, perWeekClass, byWeek };
+}
+const avg=a=>a.length?Math.round(a.reduce((x,y)=>x+y,0)/a.length):0;
+
+async function load(){
+  const app=document.getElementById("app");
+  let rows; try{ rows=await RAS.read("daily"); }catch(e){ return; }
+  if(!rows.length){ app.innerHTML='<div class="empty">아직 입력된 데이터가 없어요. 담임 입력 앱에서 저장하면 여기에 나타납니다.</div>'; return; }
+  const {weeks,perWeekClass}=aggregate(rows);
+  const cur=perWeekClass(weeks[weeks.length-1]);
+  const prev=weeks.length>1?perWeekClass(weeks[weeks.length-2]):cur;
+  const curW=weeks[weeks.length-1];
+  const schoolAvg=k=>avg(CLASSES.map(c=>cur[c][k]));
+  const dakkumGap=(()=>{ const all=["R","A","S"].flatMap(k=>CLASSES.map(c=>cur[c][k])); const dk=["R","A","S"].flatMap(k=>DAKKUM.map(c=>cur[c][k])); return avg(all)-avg(dk); })();
+  const lows=CLASSES.filter(c=>["R","A","S"].some(k=>cur[c][k]>0&&cur[c][k]<70));
+
+  app.innerHTML=`
+   <div class="sub" style="margin-top:12px">기준 주: ${curW} 주간 (입력 ${weeks.length}주 누적)</div>
+   <div class="sum">
+    ${["R","A","S"].map(k=>`<div style="border-left:6px solid ${COL[k]}"><div class="l">${k} ${NAME[k]}</div><div class="n">${schoolAvg(k)}<span style="font-size:14px">%</span></div></div>`).join("")}
+    <div style="border-left:6px solid var(--ink)"><div class="l">다꿈누리 격차</div><div class="n">${dakkumGap}<span style="font-size:14px">%p</span></div></div>
+   </div>
+   ${lows.length?`<div class="warnbox"><b style="color:var(--warn)">확인이 필요한 학급</b> ${lows.map(c=>`${c}(${["R","A","S"].filter(k=>cur[c][k]>0&&cur[c][k]<70).map(k=>NAME[k]).join(",")})`).join(" · ")}</div>`:`<div class="warnbox" style="background:#EEF4F1;border-color:var(--moss)">모든 학급이 70% 이상입니다.</div>`}
+   <section class="grid">
+    <div class="card"><h2>전교 추세</h2><canvas id="trend" height="160"></canvas></div>
+    <div class="card"><h2>학급별 ${curW}</h2><div class="cls">${CLASSES.map(c=>`<div class="cbox"><b>${c}</b>${["R","A","S"].map(k=>{const v=cur[c][k];return `<div class="bar"><div style="width:${v}%;background:${v>0&&v<70?'#B8432F':COL[k]}"></div></div>`}).join("")}<div style="font-size:11px;color:#777">R${cur[c].R} A${cur[c].A} S${cur[c].S}</div></div>`).join("")}</div></div>
+   </section>
+   <div class="ai"><div id="aibar" style="margin-bottom:8px"></div><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h2 style="margin:0">AI 경영 보좌관</h2><button class="btn" id="analyze">이번 주 분석하기</button></div>
+    <label style="font-size:12px;display:block;margin-top:10px">이번 주 학교 상황(날씨·행사·조치 등)</label>
+    <textarea id="ctx" rows="2" style="width:100%" placeholder="예: 수·목 비. 3학년 현장학습. 서포터즈 3학년 배치 시작."></textarea>
+    <div id="advice"></div></div>`;
+
+  // 추세 차트
+  const labels=weeks.slice(-6);
+  const series=k=>labels.map(w=>{ const p=perWeekClass(w); return avg(CLASSES.map(c=>p[c][k])); });
+  if(trendChart)trendChart.destroy();
+  trendChart=new Chart(document.getElementById("trend"),{type:"line",
+    data:{labels,datasets:["R","A","S"].map(k=>({label:NAME[k],data:series(k),borderColor:COL[k],tension:.3,borderWidth:2}))},
+    options:{scales:{y:{min:40,max:100}},plugins:{legend:{position:"bottom"}}}});
+
+  document.getElementById("analyze").onclick=()=>analyze(cur,prev,weeks,perWeekClass,curW);
+}
+
+async function analyze(cur,prev,weeks,perWeekClass,curW){
+  const box=document.getElementById("advice"); box.innerHTML='<p style="margin-top:12px">데이터 읽는 중…</p>';
+  const ctx=document.getElementById("ctx").value;
+  const table=CLASSES.map(c=>`${c}: R${cur[c].R} A${cur[c].A} S${cur[c].S}`).join("\n");
+  const prevT=CLASSES.map(c=>`${c}: R${prev[c].R} A${prev[c].A} S${prev[c].S}`).join("\n");
+  const trend=weeks.slice(-6).map(w=>{const p=perWeekClass(w);return `${w} R${avg(CLASSES.map(c=>p[c].R))} A${avg(CLASSES.map(c=>p[c].A))} S${avg(CLASSES.map(c=>p[c].S))}`}).join(" / ");
+  let fb=[]; try{ fb=await RAS.read("feedback"); }catch(e){}
+  const recent=fb.slice(-3).map(r=>`${r["발견"]} → ${r["조치"]} → ${r["결과"]||"관찰중"}`).join(" | ");
+  const prompt=`너는 수원매화초등학교(13학급, 다꿈누리 학급: ${DAKKUM.join(", ")}) 교장의 AI 경영 보좌관이야. 학교 목표는 '폰 OFF, RAS ON'(독서·예술문화·스포츠 일상화, 학생 주도).
+[이번 주 ${curW} 학급별 %]\n${table}\n[전주]\n${prevT}\n[추세] ${trend}\n[상황 메모] ${ctx||"없음"}\n[최근 환류] ${recent||"없음"}
+교장이 5분 안에 읽게 눈에 띄는 것 3가지를 찾아 각각 원인 가설과 이번 주 실행 가능한 조치 1개를 제안하고, 칭찬할 학급 1개를 짚어. 조치는 교사 부담을 늘리지 말고 학생 주도·가정 연계·공간 개방을 우선. 반드시 JSON만: {"headline":"..","praise":{"cls":"..","why":".."},"items":[{"find":"..","cause":"..","act":"..","who":"..","priority":"높음|보통"}]}`;
+  try{
+    const raw=await AICONF.ask(prompt,1000); const a=JSON.parse(raw.replace(/```json|```/g,"").trim());
+    box.innerHTML=`<p style="font-weight:600;margin-top:12px">${a.headline}</p><p style="font-size:14px;background:#EEF4F1;padding:8px;border-radius:8px;margin-top:6px">👏 ${a.praise.cls} — ${a.praise.why}</p>`+
+     a.items.map((it,i)=>`<div class="item" id="it${i}">
+       <div style="font-size:14px"><b style="color:#B8432F">발견</b> ${it.find}<br><b style="color:#777">가설</b> ${it.cause}<br><b style="color:#3D7EA6">조치</b> ${it.act} <span style="font-size:12px;color:#777">· ${it.who} · ${it.priority}</span></div>
+       <div style="margin-top:8px"><button class="mini" onclick="decide(${i},'채택',${JSON.stringify(JSON.stringify(it)).replace(/"/g,'&quot;')})" style="background:#3E6B5E;color:#fff;border:none">채택</button>
+       <button class="mini" onclick="decide(${i},'보류',${JSON.stringify(JSON.stringify(it)).replace(/"/g,'&quot;')})">보류</button>
+       <button class="mini" onclick="decide(${i},'기각',${JSON.stringify(JSON.stringify(it)).replace(/"/g,'&quot;')})">기각</button></div></div>`).join("");
+  }catch(e){ box.innerHTML='<p style="color:#B8432F;margin-top:12px">분석 실패 — 다시 눌러 주세요. (API/네트워크 확인)</p>'; }
+}
+
+async function decide(i,decision,itJson){
+  const it=JSON.parse(itJson); const el=document.getElementById("it"+i);
+  await RAS.write("feedback","append",{ "시각":new Date().toLocaleString("ko-KR"),"출처":"AI 제안","발견":it.find,"조치":it.act,"결정":decision,"이유":"","결과":decision==="채택"?"관찰 중":"-" });
+  el.innerHTML+=`<div style="margin-top:6px;font-weight:600;color:#3E6B5E">교장 ${decision} ✓ — 결정 일지에 기록됨</div>`;
+}
+
+// 연결 배너 → 준비되면 load
+const conn=document.getElementById("conn"); RAS.banner(conn); conn._onReady=load; if(RAS.conf().url) load();
+</script><script>if(window.ROLES)ROLES.badge();</script>
+</body></html>

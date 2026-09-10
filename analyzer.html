@@ -1,0 +1,49 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>설문 자유응답 읽기</title>
+<style>:root{--ink:#1F3A36;--moss:#3E6B5E;--plum:#C9527A;--sky:#3D7EA6;--paper:#FBFAF7;--line:#E6E2DA;--warn:#B8432F;--star:#F2C14E}
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--paper);color:var(--ink);max-width:820px;margin:0 auto;padding:16px}
+header{border-bottom:2px solid var(--ink);padding-bottom:10px}h1{font-size:20px}.sub{font-size:13px;color:var(--moss)}
+button{font:inherit;cursor:pointer}.btn{padding:8px 14px;border:none;border-radius:8px;background:var(--ink);color:#fff;font-weight:600}
+.mini{padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:#fff;font-size:13px}
+input,select,textarea{font:inherit;border:1px solid var(--line);border-radius:8px;padding:8px}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:10px}
+.grid{display:grid;gap:10px}.g3{grid-template-columns:repeat(3,1fr)}.g2{grid-template-columns:repeat(2,1fr)}
+@media(max-width:640px){.g3,.g2{grid-template-columns:1fr}}</style><script src="roles.js"></script>
+<script>if(window.ROLES && !ROLES.guard()){throw new Error("redirect");}</script>
+</head><body>
+<header><h1>설문 자유응답 읽기 ⭐</h1><div class="sub">여러 언어로 온 목소리를 번역·분류·요약</div></header>
+<div id="ai"></div>
+<div class="card"><div class="sub">형식: 대상,응답 (한 줄에 하나)</div>
+ <textarea id="in" rows="7" style="width:100%;margin-top:6px;font-family:monospace;font-size:13px">학생,점심시간에 체육관 문이 잠겨 있어서 못 들어가요
+학생,우리가 정한 활동을 더 많이 하고 싶어요
+학부모,Con tôi không hiểu thông báo. Xin gửi bằng tiếng Việt.
+학부모,音乐会的日期请提前通知。
+학부모,Хотелось бы, чтобы библиотека работала после уроков.
+교사,행사가 몰리는 10월에 일상 활동이 끊깁니다
+학생,I want to play soccer with Korean friends but don't know how to join.</textarea>
+ <button class="btn" style="margin-top:8px" onclick="run()">AI로 읽기</button></div>
+<div id="out"></div>
+<script src="ras-config.js"></script>
+<script src="ai-config.js"></script>
+<script>
+const SAMPLE={summary:{headline:"공간 개방과 다국어 안내 요구가 가장 많습니다.",top:["점심시간 체육관·도서관 개방","안내문 모국어 발송","10월 행사 주간 일상활동 유지"],multicultural:"베트남·중국·러시아 가정에서 안내문을 모국어로 받고 싶다는 목소리가 반복됩니다.",actions:["점심 체육관 개방+학생 정리당번","주간 편지 다국어 발송","10월 아침독서 고정"]},
+ rows:[{who:"학생",ko:"점심시간에 체육관이 잠겨 못 들어가요",element:"공간 접근",kind:"불만",lang:"ko"},{who:"학부모",ko:"안내문을 베트남어로 보내주세요",element:"협력·환류",kind:"요청",lang:"vi"},{who:"학부모",ko:"음악회 날짜를 미리 알려주세요",element:"가정 연계",kind:"요청",lang:"zh"},{who:"교사",ko:"10월 행사로 일상 활동이 끊깁니다",element:"일상 운영",kind:"불만",lang:"ko"}]};
+const KC={요청:"#3D7EA6",칭찬:"#3E6B5E",불만:"#B8432F",제안:"#C9527A"};
+async function run(){
+ const rows=document.getElementById("in").value.trim().split("\n").map(l=>l.split(",")).filter(a=>a.length>=2);
+ document.getElementById("out").innerHTML='<p class="sub" style="margin-top:10px">번역·분류 중…</p>';
+ const list=rows.map((r,i)=>i+"|"+r[0]+"|"+r.slice(1).join(",")).join("\n");
+ const prompt=`너는 초등학교 교장의 AI 보좌관. 아래 RAS 설문 자유응답(번호|대상|응답, 외국어 섞임)을 한국어 번역하고 경기 진단 9요소[교육과정,방과후,일상 운영,참여 시간,공간 접근,학생 주도,가정 연계,지역 연계,협력·환류,기타] 중 하나로 분류, 성격(요청/칭찬/불만/제안)과 원문 언어코드를 붙여. 전체 요약(가장 많은 요구 3, 다문화 가정 목소리, 바로 할 조치 3)도. JSON만: {"summary":{"headline":"","top":[],"multicultural":"","actions":[]},"rows":[{"who":"","ko":"","element":"","kind":"","lang":""}]}\n${list}`;
+ try{const raw=await AICONF.ask(prompt,1200);show(JSON.parse(raw.replace(/```json|```/g,"").trim()));}
+ catch(e){show(SAMPLE,e.message);}
+}
+function show(d,err){
+ document.getElementById("out").innerHTML=(err?`<div class="sub" style="color:#8a6d00;margin-top:8px">${err==="NO_KEY"?"AI 키 없음 — 샘플 결과":"AI 실패 — 샘플"}</div>`:"")+
+  `<div class="card" style="border:2px solid var(--star)"><b>${d.summary.headline}</b>
+   <div class="grid g2" style="margin-top:8px;font-size:13px"><div><b>가장 많은 요구</b><ol style="margin-left:16px">${d.summary.top.map(x=>`<li>${x}</li>`).join("")}</ol></div>
+   <div><b>바로 할 수 있는 것</b><ol style="margin-left:16px">${d.summary.actions.map(x=>`<li>${x}</li>`).join("")}</ol></div></div>
+   <div style="font-size:13px;background:#EEF4F1;border-radius:6px;padding:8px;margin-top:8px">🌏 ${d.summary.multicultural}</div></div>`+
+  d.rows.map(r=>`<div class="card" style="border-left:5px solid ${KC[r.kind]||'#ccc'};padding:10px"><div style="font-size:12px;color:#777">${r.who} · ${r.kind} · ${r.element} ${r.lang!=="ko"?"· 원문 "+r.lang:""}</div><div style="font-size:14px;margin-top:2px">${r.ko}</div></div>`).join("");
+}
+AICONF.banner(document.getElementById("ai"),"자유응답 분석");
+</script><script>if(window.ROLES)ROLES.badge();</script>
+</body></html>

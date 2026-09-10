@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>매화 RAS-D 연결 시연 허브</title>
+<style>
+  :root{--ink:#1F3A36;--moss:#3E6B5E;--plum:#C9527A;--sky:#3D7EA6;--paper:#FBFAF7;--line:#E6E2DA;--warn:#B8432F;--star:#F2C14E}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--paper);color:var(--ink);height:100vh;display:flex;flex-direction:column;overflow:hidden}
+  /* 상단 바 */
+  .top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 16px;border-bottom:2px solid var(--ink);background:#fff}
+  .top h1{font-size:17px}.top h1 small{font-weight:400;color:var(--moss);font-size:12px;display:block}
+  .prog{flex:1;max-width:360px;height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+  .prog>div{height:6px;background:var(--plum);transition:width .3s}
+  .top .nav{display:flex;gap:6px}
+  .top button{font:inherit;cursor:pointer;border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 12px;font-size:13px}
+  .top button.pri{background:var(--ink);color:#fff;border:none}
+  /* 본문 2단 */
+  .body{flex:1;display:grid;grid-template-columns:280px 1fr;min-height:0}
+  /* 좌측 스텝 레일 */
+  .rail{border-right:1px solid var(--line);background:#fff;overflow-y:auto;padding:10px}
+  .rail .step{display:flex;gap:10px;padding:10px;border-radius:10px;cursor:pointer;align-items:flex-start}
+  .rail .step:hover{background:var(--paper)}
+  .rail .step.on{background:#EEF4F1;box-shadow:inset 3px 0 0 var(--moss)}
+  .rail .n{width:24px;height:24px;flex:none;border-radius:50%;background:var(--line);color:var(--ink);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+  .rail .step.on .n{background:var(--moss);color:#fff}
+  .rail .tt{font-size:14px;font-weight:600}
+  .rail .ds{font-size:12px;color:#777;margin-top:2px}
+  .rail .tag{font-size:10px;padding:1px 6px;border-radius:999px;margin-left:4px}
+  .tag.ai{background:#FFF6D6;color:#8a6d00}.tag.star{background:var(--star);color:#5a4300}
+  /* 우측 무대 */
+  .stage{display:flex;flex-direction:column;min-height:0}
+  .frameWrap{flex:1;position:relative;background:#eceae4}
+  iframe{width:100%;height:100%;border:0;background:#fff}
+  .placeholder{position:absolute;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:24px;color:#777}
+  .placeholder.on{display:flex}
+  .placeholder h2{font-size:20px;color:var(--ink);margin-bottom:8px}
+  /* 해설 자막 */
+  .narr{background:var(--ink);color:#fff;padding:12px 16px;display:flex;gap:12px;align-items:center}
+  .narr .badge{background:var(--star);color:#5a4300;font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;white-space:nowrap}
+  .narr p{font-size:14px;line-height:1.5}
+  .narr .open{margin-left:auto;white-space:nowrap;background:#fff;color:var(--ink);border:none;border-radius:8px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}
+  @media(max-width:820px){.body{grid-template-columns:1fr}.rail{display:none}}
+</style>
+<script src="roles.js"></script>
+</head>
+<body>
+<div class="top">
+  <h1><a href="index.html" style="color:inherit;text-decoration:none">매화 RAS-D 연결 시연</a><small>발표자가 직접 넘기며 시연하는 허브 · 제목을 누르면 개요로</small></h1>
+  <div class="prog"><div id="bar"></div></div>
+  <div class="nav">
+    <button onclick="go(-1)">← 이전</button>
+    <span id="count" style="font-size:13px;align-self:center;min-width:44px;text-align:center"></span>
+    <button class="pri" onclick="go(1)">다음 →</button>
+  </div>
+</div>
+
+<div class="body">
+  <div class="rail" id="rail"></div>
+  <div class="stage">
+    <div class="narr">
+      <span class="badge" id="badge"></span>
+      <p id="narr"></p>
+      <button class="open" id="openBtn">새 창</button>
+    </div>
+    <div class="frameWrap">
+      <iframe id="frame" title="시연 화면"></iframe>
+      <div class="placeholder" id="ph">
+        <h2 id="phT"></h2>
+        <p id="phD"></p>
+        <p style="margin-top:10px;font-size:13px">이 화면은 이 허브와 같은 폴더에 파일이 있을 때 시연됩니다.<br>발표 전 한 번 열어 구글시트 연결(설정)을 마쳐두세요.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const STEPS=[
+ {t:"연구 개요",d:"모형·지표·일정 한눈에",tag:"",file:"index.html",
+  badge:"START",narr:"폰 오프 학교가 독서·예술·스포츠를 데이터로 경영하는 RAS-D 모형입니다. 진단→설계→실천→환류 네 단계를 차례로 시연합니다."},
+ {t:"현관 매화나무",d:"실천의 상징",tag:"star",file:"tree.html",
+  badge:"실천 · 상징",narr:"학급이 RAS를 실천할수록 가지에 꽃이 핍니다. 학생은 폰 없이 등굣길에 우리 반 가지를 봅니다. 데이터를 학생이 읽는 상징물로 바꾼 장치입니다."},
+ {t:"담임 입력",d:"30초, 모든 데이터의 출발",tag:"star",file:"input.html",
+  badge:"실천 · 입력",narr:"담임이 하루 참여 인원을 30초에 입력합니다. 이 한 번의 입력이 매화나무의 꽃과 대시보드의 수치가 됩니다. 교사 부담을 늘리지 않는 것이 원칙입니다."},
+ {t:"대시보드 · AI 보좌관",d:"읽고 제안받기",tag:"ai",file:"dashboard.html",
+  badge:"환류 · AI",narr:"입력이 학급별로 집계됩니다. AI 보좌관이 낮은 학급을 찾아 원인 가설과 조치를 제안하면, 교장이 채택·보류·기각을 결정합니다. AI는 제안, 결정은 사람."},
+ {t:"학생 참여예산",d:"데이터로 학생이 결정",tag:"star",file:"budget.html",
+  badge:"설계 · 권한",narr:"학생자치회가 연 100만 원을 데이터 근거로 배분합니다. 낮은 반을 위한 제안에는 그 반의 참여율이 근거로 자동 첨부됩니다. 예산 결정권을 학생에게 넘긴 지점입니다."},
+ {t:"교장의 결정 일지",d:"이유까지 공개",tag:"star",file:"journal.html",
+  badge:"환류 · 투명",narr:"AI 제안과 교장의 채택·기각 이유를 학부모·학생에게 그대로 공개합니다. 기각의 이유가 남는 것이 이 일지의 핵심입니다. AI 채택률과 개선 사례가 연구 지표가 됩니다."},
+ {t:"진단 설문",d:"5개 언어 · 기준선",tag:"ai",file:"survey.html",
+  badge:"진단",narr:"교사·학생·학부모가 진단 9요소에 응답합니다. 다문화 가정을 위해 5개 언어를 지원합니다. 3월 첫 주의 사전 응답이 연구 전체의 기준선입니다."},
+ {t:"마무리 · 헌장",d:"재지 않기로 한 것",tag:"",file:"index.html#ethics",
+  badge:"원칙",narr:"학생 순위를 만들지 않고, 학생 화면은 0, AI는 제안만, 개인정보는 미수집. '더 많이'가 아니라 '꼭 필요한 만큼'. 절제된 디지털 경영 헌장으로 마칩니다."},,
+ {t:"자유응답 분석",d:"다국어 목소리",tag:"ai",file:"analyzer.html",badge:"부록 · 진단",narr:"여러 언어로 들어온 설문 자유응답을 번역·분류·요약해 다문화 가정의 목소리를 경영에 올립니다."},
+ {t:"주간 편지",d:"다국어 가정통신",tag:"ai",file:"letter.html",badge:"부록 · 실천",narr:"학급 데이터로 학부모 편지 초안을 쓰고 다꿈누리 가정 언어로 번역합니다."},
+ {t:"별이 AI 사서",d:"교내 장서 추천",tag:"ai",file:"librarian.html",badge:"부록 · 설계",narr:"학교 캐릭터 별이가 교내 장서 안에서만 책을 추천합니다. 학생 대면 AI는 실제 운영 시 교사 매개로."},
+ {t:"장서 태깅",d:"대상학년·주제어",tag:"ai",file:"tagger.html",badge:"부록 · 준비",narr:"도서 목록에 대상학년과 주제어를 AI로 일괄 부여해 별이 사서를 준비합니다."},
+ {t:"RAS 날씨예보",d:"방송 대본",tag:"ai",file:"weather.html",badge:"부록 · 실천",narr:"학급 참여율을 날씨로 보여주고, 방송부가 읽을 1분 대본을 만듭니다."},
+ {t:"동네 RAS 맵",d:"가족 나들이",tag:"",file:"map.html",badge:"부록 · 지역",narr:"가족이 동네 도서관·공원·미술관에 다녀오면 그 자리에 꽃이 핍니다."},
+ {t:"어린이 경영회의",d:"학생이 제안",tag:"ai",file:"kidsmeeting.html",badge:"부록 · 환류",narr:"학생이 데이터를 읽고 별이에게 묻고 교장께 제안합니다. 학생이 경영 참여자가 됩니다."},
+ {t:"다꿈 서포터즈",d:"13개국 학부모",tag:"ai",file:"supporters.html",badge:"부록 · 참여",narr:"13개국 학부모가 안건을 자기 언어로 읽고 투표·의견을 냅니다."},
+ {t:"학생 활동 게시판",d:"제안→실행→후기",tag:"",file:"board.html",badge:"부록 · 설계",narr:"학생 기획 활동을 제안·실행·후기로 관리합니다. 학생 주도성 지표의 출처입니다."},
+ {t:"데이터 카페",d:"교사 PLC 30분",tag:"",file:"cafe.html",badge:"부록 · 환류",narr:"교사가 월 1회 한 장 요약을 보고 30분 안에 '다음 달 바꿀 것 하나'를 정합니다."},
+ {t:"RAS 홈페이지",d:"전체를 묶는 학교 홈",tag:"",file:"home.html",badge:"부록",narr:"소개·R·A·S·성과·참여하기 메뉴로 모든 화면을 묶는 학교 홈페이지입니다."},
+];
+let i=0;
+const frame=document.getElementById("frame"),ph=document.getElementById("ph"),rail=document.getElementById("rail");
+
+function render(){
+  rail.innerHTML=STEPS.map((s,k)=>`<div class="step ${k===i?'on':''}" onclick="jump(${k})">
+    <div class="n">${k+1}</div><div><div class="tt">${s.t}${s.tag?`<span class="tag ${s.tag}">${s.tag==='ai'?'AI':'⭐'}</span>`:''}</div><div class="ds">${s.d}</div></div></div>`).join("");
+  const s=STEPS[i];
+  document.getElementById("badge").textContent=s.badge;
+  document.getElementById("narr").textContent=s.narr;
+  document.getElementById("count").textContent=(i+1)+" / "+STEPS.length;
+  document.getElementById("bar").style.width=((i+1)/STEPS.length*100)+"%";
+  // iframe 로드 시도 + 실패 시 안내
+  ph.classList.remove("on");
+  document.getElementById("phT").textContent=s.t;
+  document.getElementById("phD").textContent=s.d;
+  frame.src=s.file;
+  frame.onerror=()=>ph.classList.add("on");
+  // file:// 로컬에서 파일 부재 시 onload가 안 잡히기도 하므로 타임아웃 보조
+  clearTimeout(window._t); window._t=setTimeout(()=>{
+    try{ if(!frame.contentWindow||frame.contentWindow.length===0 && !frame.contentDocument){} }catch(e){}
+  },1200);
+  document.getElementById("openBtn").onclick=()=>window.open(s.file,"_blank");
+}
+function go(d){i=Math.max(0,Math.min(STEPS.length-1,i+d));render();}
+function jump(k){i=k;render();}
+document.addEventListener("keydown",e=>{if(e.key==="ArrowRight")go(1);if(e.key==="ArrowLeft")go(-1);});
+render();
+</script>
+<script>if(window.ROLES)ROLES.badge();</script>
+</body>
+</html>

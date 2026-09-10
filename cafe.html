@@ -1,0 +1,38 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>데이터 카페</title>
+<style>:root{--ink:#1F3A36;--moss:#3E6B5E;--plum:#C9527A;--sky:#3D7EA6;--paper:#FBFAF7;--line:#E6E2DA;--warn:#B8432F;--star:#F2C14E}
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--paper);color:var(--ink);max-width:820px;margin:0 auto;padding:16px}
+header{border-bottom:2px solid var(--ink);padding-bottom:10px}h1{font-size:20px}.sub{font-size:13px;color:var(--moss)}
+button{font:inherit;cursor:pointer}.btn{padding:8px 14px;border:none;border-radius:8px;background:var(--ink);color:#fff;font-weight:600}
+.mini{padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:#fff;font-size:13px}
+input,select,textarea{font:inherit;border:1px solid var(--line);border-radius:8px;padding:8px}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:10px}
+.grid{display:grid;gap:10px}.g3{grid-template-columns:repeat(3,1fr)}.g2{grid-template-columns:repeat(2,1fr)}
+@media(max-width:640px){.g3,.g2{grid-template-columns:1fr}}</style><script src="roles.js"></script>
+<script>if(window.ROLES && !ROLES.guard()){throw new Error("redirect");}</script>
+</head><body>
+<header><h1>데이터 카페 · 9월</h1><div class="sub">한 장, 30분, 다음 달 바꿀 것 하나</div></header>
+<div class="card" style="border:2px solid var(--star)">
+ <b>이번 달 한 장</b>
+ <div class="grid g3" style="margin-top:8px">
+  <div style="border-top:5px solid #3E6B5E;background:#FBFAF7;border-radius:8px;padding:8px;text-align:center"><div style="font-size:12px">R 독서</div><div style="font-size:22px;font-weight:700">84%</div><div style="font-size:11px;color:#3E6B5E">전월 +6</div></div>
+  <div style="border-top:5px solid #C9527A;background:#FBFAF7;border-radius:8px;padding:8px;text-align:center"><div style="font-size:12px">A 예술</div><div style="font-size:22px;font-weight:700">80%</div><div style="font-size:11px;color:#3E6B5E">전월 +10</div></div>
+  <div style="border-top:5px solid #3D7EA6;background:#FBFAF7;border-radius:8px;padding:8px;text-align:center"><div style="font-size:12px">S 스포츠</div><div style="font-size:22px;font-weight:700">83%</div><div style="font-size:11px;color:#3E6B5E">전월 +8</div></div>
+ </div>
+ <div style="font-size:13px;margin-top:10px"><b>70% 아래</b> 3-2 스포츠 68% · 3-3 스포츠 64% · 3-3 예술 69%<br>
+ <b>학생 기획</b> 14건(완료 9) · <b>다꿈누리 격차</b> 6%p · <b>가정 인증</b> 118가구 · <b>AI 제안</b> 채택2/보류1/기각2</div>
+</div>
+<div class="card"><b>30분 진행</b>
+ <div id="steps" style="margin-top:8px"></div></div>
+<div class="card"><b>다음 달 바꿀 것 하나</b>
+ <div style="display:flex;gap:6px;margin-top:6px"><input id="one" style="flex:1" placeholder="예: 10월 행사 주간에도 아침독서는 유지"><button class="btn" onclick="commit()">기록</button></div>
+ <div id="past" style="margin-top:10px;font-size:13px"><div style="color:#777">지난 카페: 7월 음악실 쉬는시간 개방 · 8월 우천 시 실내 아침운동</div></div></div>
+<script>
+const ST=[["읽기",5],["보이는 것",8],["왜 그럴까",7],["다음 달 하나",7],["기록",3]];
+let timer=null,left=0,cur=-1;
+function draw(){document.getElementById("steps").innerHTML=ST.map((s,i)=>`<div class="card" style="margin-top:6px;cursor:pointer;${cur===i?'border:1px solid #1F3A36':''}" onclick="run(${i})"><b style="color:#3D7EA6">${s[1]}분</b> ${s[0]} ${cur===i?`· <span id="t">${fmt(left)}</span>`:""}</div>`).join("");}
+function fmt(s){return Math.floor(s/60)+":"+String(s%60).padStart(2,"0");}
+function run(i){cur=i;left=ST[i][1]*60;clearInterval(timer);timer=setInterval(()=>{left--;if(left<=0)clearInterval(timer);const t=document.getElementById("t");if(t)t.textContent=fmt(Math.max(0,left));},1000);draw();}
+function commit(){const v=document.getElementById("one").value;if(!v)return;document.getElementById("past").innerHTML+=`<div style="margin-top:4px">✓ 9월 ${v}</div>`;document.getElementById("one").value="";}
+draw();
+</script><script>if(window.ROLES)ROLES.badge();</script>
+</body></html>

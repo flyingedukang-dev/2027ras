@@ -1,0 +1,35 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>동네 매화 RAS 맵</title>
+<style>:root{--ink:#1F3A36;--moss:#3E6B5E;--plum:#C9527A;--sky:#3D7EA6;--paper:#FBFAF7;--line:#E6E2DA;--warn:#B8432F;--star:#F2C14E}
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--paper);color:var(--ink);max-width:820px;margin:0 auto;padding:16px}
+header{border-bottom:2px solid var(--ink);padding-bottom:10px}h1{font-size:20px}.sub{font-size:13px;color:var(--moss)}
+button{font:inherit;cursor:pointer}.btn{padding:8px 14px;border:none;border-radius:8px;background:var(--ink);color:#fff;font-weight:600}
+.mini{padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:#fff;font-size:13px}
+input,select,textarea{font:inherit;border:1px solid var(--line);border-radius:8px;padding:8px}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:10px}</style></head><body>
+<header><h1>동네 매화 RAS 맵</h1><div class="sub">가족이 다녀오면 그 자리에 꽃이 하나</div></header>
+<div class="card"><svg id="map" viewBox="0 0 800 440" style="width:100%;background:#EEF2EA;border-radius:10px"></svg></div>
+<div class="card" id="panel"><div class="sub">지도에서 다녀온 곳을 눌러 "다녀왔어요"를 눌러 주세요.</div></div>
+<script>
+const SPOTS=[
+ {id:1,area:"R",name:"영통도서관",x:560,y:130,n:10},{id:2,area:"R",name:"작은도서관",x:210,y:110,n:4},
+ {id:3,area:"A",name:"시립미술관",x:150,y:300,n:2},{id:4,area:"A",name:"경기아트센터",x:620,y:300,n:1},
+ {id:5,area:"S",name:"매탄공원",x:380,y:370,n:14},{id:6,area:"S",name:"축구공원",x:720,y:200,n:5},
+ {id:7,area:"S",name:"광교호수",x:460,y:60,n:3},{id:8,area:"R",name:"학교도서관(주말)",x:400,y:220,n:7,school:1},
+];
+const COL={R:"#3E6B5E",A:"#C9527A",S:"#3D7EA6"},NM={R:"독서",A:"예술문화",S:"스포츠"};let sel=null;
+function draw(){
+ let s=`<path d="M0 200 Q260 180 400 250 T800 300" stroke="#D9D4CA" stroke-width="24" fill="none"/><ellipse cx="470" cy="70" rx="100" ry="38" fill="#CFE3EC"/>`;
+ SPOTS.forEach(p=>{const col=COL[p.area];
+  for(let k=0;k<Math.min(p.n,10);k++){const a=k/Math.min(p.n,10)*6.28,r=20+(k%2)*5;s+=`<circle cx="${p.x+Math.cos(a)*r}" cy="${p.y+Math.sin(a)*r}" r="5" fill="${col}" opacity=".85"/>`;}
+  s+=`<circle cx="${p.x}" cy="${p.y}" r="${sel===p.id?15:12}" fill="${p.school?'#F2C14E':'#fff'}" stroke="${col}" stroke-width="3" onclick="pick(${p.id})" style="cursor:pointer"/>
+   <text x="${p.x}" y="${p.y+4}" font-size="10" text-anchor="middle" font-weight="700" onclick="pick(${p.id})" style="cursor:pointer">${p.n}</text>
+   <text x="${p.x}" y="${p.y+42}" font-size="11" text-anchor="middle" fill="#1F3A36" font-weight="600" stroke="#EEF2EA" stroke-width="3" paint-order="stroke">${p.name}</text>`;});
+ document.getElementById("map").innerHTML=s;
+}
+function pick(id){sel=id;const p=SPOTS.find(x=>x.id===id);
+ document.getElementById("panel").innerHTML=`<div style="font-weight:600">${p.name} <span class="mini" style="background:${COL[p.area]};color:#fff;border:none">${p.area} ${NM[p.area]}</span></div>
+  <div class="sub" style="margin-top:4px">이번 달 ${p.n}가족 다녀감</div>
+  <button class="btn" style="margin-top:8px" onclick="go(${id})">다녀왔어요</button>`;draw();}
+function go(id){const p=SPOTS.find(x=>x.id===id);p.n++;pick(id);}
+draw();
+</script></body></html>

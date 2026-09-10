@@ -1,0 +1,38 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>우리가 만드는 매화 RAS</title>
+<style>:root{--ink:#1F3A36;--moss:#3E6B5E;--plum:#C9527A;--sky:#3D7EA6;--paper:#FBFAF7;--line:#E6E2DA;--warn:#B8432F;--star:#F2C14E}
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--paper);color:var(--ink);max-width:820px;margin:0 auto;padding:16px}
+header{border-bottom:2px solid var(--ink);padding-bottom:10px}h1{font-size:20px}.sub{font-size:13px;color:var(--moss)}
+button{font:inherit;cursor:pointer}.btn{padding:8px 14px;border:none;border-radius:8px;background:var(--ink);color:#fff;font-weight:600}
+.mini{padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:#fff;font-size:13px}
+input,select,textarea{font:inherit;border:1px solid var(--line);border-radius:8px;padding:8px}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:10px}
+.grid{display:grid;gap:10px}.g3{grid-template-columns:repeat(3,1fr)}.g2{grid-template-columns:repeat(2,1fr)}
+@media(max-width:640px){.g3,.g2{grid-template-columns:1fr}}</style></head><body>
+<header><h1>우리가 만드는 매화 RAS</h1><div class="sub">학생자치회 활동 게시판 · 제안 → 실행 → 후기</div></header>
+<div id="app"></div>
+<script>
+const AREA={R:["독서","#3E6B5E"],A:["예술문화","#C9527A"],S:["스포츠","#3D7EA6"]};
+const STAGES=[["idea","제안했어요"],["doing","하고 있어요"],["done","끝났어요"]];
+let items=[
+ {id:1,area:"S",title:"점심시간 학년 대항 줄넘기",who:"5-2 자치회",when:"9월 3~4주",stage:"doing",likes:23,plan:"매주 수요일 점심, 운동장. 학년별 30초 기록 합산.",review:""},
+ {id:2,area:"A",title:"급식실 앞 버스킹",who:"6-1 리코더팀",when:"매주 금요일",stage:"done",likes:41,plan:"1인1악기 연습곡 2곡.",review:"1~2학년이 앞에 앉아서 들었어요. 다음엔 신청곡 받고 싶어요."},
+ {id:3,area:"R",title:"도서관 '이 책 어때' 게시판",who:"4-1 도서부",when:"10월",stage:"idea",likes:12,plan:"읽은 책 한 줄 추천 쪽지 붙이는 벽.",review:""},
+ {id:4,area:"S",title:"다꿈누리 친구와 같이 축구",who:"3-3",when:"10월 첫 주",stage:"idea",likes:18,plan:"몸튼맘튼 축구클럽에 초대. 팀은 섞어서.",review:""},
+];
+let voted=[];
+function render(){
+ document.getElementById("app").innerHTML=`<div class="grid g3" style="margin-top:12px">`+STAGES.map(([id,name])=>`
+  <div style="background:#F1EEE7;border-radius:12px;padding:8px"><div style="font-weight:600;padding:4px">${name} <span style="font-weight:400">${items.filter(x=>x.stage===id).length}</span></div>`+
+  items.filter(x=>x.stage===id).map(x=>`<div class="card" style="border-left:5px solid ${AREA[x.area][1]};margin-top:6px">
+    <div style="font-weight:600;font-size:14px">${x.title}</div><div style="font-size:12px;color:#777">${x.who} · ${x.when}</div>
+    <div style="font-size:12px;margin-top:4px">${x.plan}</div>
+    ${x.review?`<div style="font-size:12px;background:#EEF4F1;border-radius:6px;padding:6px;margin-top:6px"><b>후기</b> ${x.review}</div>`:""}
+    <div style="margin-top:6px"><button class="mini" style="${voted.includes(x.id)?'background:#C9527A;color:#fff':'color:#C9527A;border-color:#C9527A'}" onclick="like(${x.id})">♥ ${x.likes}</button>
+    ${x.stage==="idea"?`<button class="mini" onclick="mv(${x.id},'doing')">시작</button>`:""}
+    ${x.stage==="doing"?`<button class="mini" onclick="mv(${x.id},'done')">완료</button>`:""}</div>
+  </div>`).join("")+`</div>`).join("")+`</div>`;
+}
+function like(id){if(voted.includes(id))return;voted.push(id);items.find(x=>x.id==id).likes++;render();}
+function mv(id,st){items.find(x=>x.id==id).stage=st;render();}
+render();
+</script></body></html>

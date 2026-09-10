@@ -1,0 +1,120 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>우리가 쓰는 RAS 예산 — 실데이터</title>
+<style>
+:root{--ink:#1F3A36;--moss:#3E6B5E;--plum:#C9527A;--sky:#3D7EA6;--paper:#FBFAF7;--line:#E6E2DA;--warn:#B8432F;--star:#F2C14E}
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--paper);color:var(--ink);max-width:680px;margin:0 auto;padding:16px}
+header{border-bottom:2px solid var(--ink);padding-bottom:10px;display:flex;justify-content:space-between;align-items:end;flex-wrap:wrap;gap:8px}
+h1{font-size:20px}.sub{font-size:13px;color:var(--moss)}
+.tabs{display:flex;gap:6px;margin-top:8px}.tabs button{padding:4px 12px;border-radius:999px;border:1px solid var(--line);background:#fff;font:inherit;font-size:12px;cursor:pointer}.tabs button.on{background:var(--ink);color:#fff}
+.bud{background:#fff;border:2px solid var(--star);border-radius:12px;padding:14px;margin-top:14px}
+.track{height:16px;border-radius:999px;background:var(--line);display:flex;overflow:hidden;margin-top:8px}
+.item{background:#fff;border-radius:12px;padding:12px;margin-top:10px;border-left:6px solid var(--line)}
+button{font:inherit;cursor:pointer}.btn{padding:8px 14px;border:none;border-radius:8px;background:var(--ink);color:#fff;font-weight:600}
+.mini{padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:#fff;font-size:13px}
+input,select,textarea{font:inherit;border:1px solid var(--line);border-radius:8px;padding:8px}
+.ev{font-size:12px;background:#EEF4F1;border-radius:6px;padding:6px;margin-top:6px}
+</style></head><body>
+<header><div><h1>우리가 쓰는 RAS 예산</h1><div class="sub">데이터를 보고, 필요한 곳에, 우리가 정해요</div></div>
+<div class="tabs"><button class="on" data-v="student" onclick="setView('student')">학생</button><button data-v="admin" onclick="setView('admin')">교사</button></div></header>
+<div id="conn" style="margin-top:10px"></div>
+<div id="app"></div>
+<script src="ras-config.js"></script>
+<script>
+const TOTAL=1000000, AREA={R:["독서","#3E6B5E"],A:["예술문화","#C9527A"],S:["스포츠","#3D7EA6"]};
+const CLASSES=["1-1","1-2","2-1","2-2","3-1","3-2","3-3","4-1","4-2","5-1","5-2","5-3","6-1"];
+const won=n=>(+n).toLocaleString("ko-KR")+"원";
+let view="student", items=[], daily={}, voted=JSON.parse(localStorage.getItem("ras_voted")||"[]");
+
+function setView(v){view=v;document.querySelectorAll(".tabs button").forEach(b=>b.classList.toggle("on",b.dataset.v===v));render();}
+function _ymd(d){
+  if(d==null) return "";
+  if(typeof d==="string"){
+    var m=d.match(/(\d{4})[-.\/]\s*(\d{1,2})[-.\/]\s*(\d{1,2})/);
+    if(m) return m[1]+"-"+String(m[2]).padStart(2,"0")+"-"+String(m[3]).padStart(2,"0");
+    var dt=new Date(d); if(!isNaN(dt)) return dt.getFullYear()+"-"+String(dt.getMonth()+1).padStart(2,"0")+"-"+String(dt.getDate()).padStart(2,"0");
+    return "";
+  }
+  var dt=new Date(d);
+  return dt.getFullYear()+"-"+String(dt.getMonth()+1).padStart(2,"0")+"-"+String(dt.getDate()).padStart(2,"0");
+}
+function weekKey(d){
+  var s=_ymd(d); if(!s) return "";
+  var p=s.split("-"); var dt=new Date(Date.UTC(+p[0],+p[1]-1,+p[2]));
+  var day=(dt.getUTCDay()+6)%7;
+  dt.setUTCDate(dt.getUTCDate()-day);
+  return dt.toISOString().slice(0,10);
+}
+const avg=a=>a.length?Math.round(a.reduce((x,y)=>x+y,0)/a.length):0;
+
+async function load(){
+  try{
+    const [props,day]=await Promise.all([RAS.read("proposals"),RAS.read("daily")]);
+    items=props.map(r=>({id:r.id,area:r["영역"],title:r["제목"],who:r["제안자"],amount:+r["금액"]||0,cls:String(r["대상학급"]||"").split(",").filter(Boolean),why:r["사유"],status:r["상태"]||"투표중",votes:+r["찬성"]||0}));
+    // 최신 주 학급 참여율(근거용)
+    const byW={};day.forEach(r=>{if(!r["날짜"])return;(byW[weekKey(r["날짜"])]=byW[weekKey(r["날짜"])]||[]).push(r);});
+    const wk=Object.keys(byW).sort().pop(); daily={};
+    if(wk){const m={};byW[wk].forEach(r=>{const t=+r["정원"]||1,c=r["학급"];if(!m[c])m[c]={R:[],A:[],S:[]};["R","A","S"].forEach(k=>m[c][k].push((+r[k]||0)/t*100));});CLASSES.forEach(c=>{const x=m[c];daily[c]=x?{R:avg(x.R),A:avg(x.A),S:avg(x.S)}:{R:0,A:0,S:0};});}
+    render();
+  }catch(e){}
+}
+function ev(cls,area){if(!cls.length||!Object.keys(daily).length)return null;const vals=cls.map(c=>(daily[c]||{})[area]||0);const all=avg(CLASSES.map(c=>(daily[c]||{})[area]||0));const mine=avg(vals);return {mine,all,diff:mine-all};}
+
+function render(){
+  const spent=items.filter(x=>x.status==="배정").reduce((a,b)=>a+b.amount,0);
+  const pending=items.filter(x=>x.status==="투표중").reduce((a,b)=>a+b.amount,0);
+  const left=TOTAL-spent;
+  document.getElementById("app").innerHTML=`
+   <div class="bud"><div style="display:flex;justify-content:space-between"><span class="sub">올해 학생 참여예산</span><b>${won(TOTAL)}</b></div>
+     <div class="track"><div style="width:${spent/TOTAL*100}%;background:#3E6B5E"></div><div style="width:${pending/TOTAL*100}%;background:#F2C14E"></div></div>
+     <div style="display:flex;justify-content:space-between;font-size:12px;margin-top:4px"><span style="color:#3E6B5E">배정 ${won(spent)}</span><span style="color:#A67C00">투표중 ${won(pending)}</span><span>남은 돈 <b>${won(left)}</b></span></div></div>
+   ${view==="student"?`<button class="btn" style="width:100%;margin-top:10px" onclick="openForm()">예산 쓸 곳 제안하기</button><div id="form"></div>`:""}
+   <div id="list"></div>`;
+  const list=document.getElementById("list");
+  const sorted=[...items].sort((a,b)=>a.status===b.status?b.votes-a.votes:a.status==="투표중"?-1:1);
+  list.innerHTML=sorted.map(x=>{const e=ev(x.cls,x.area);const canVote=view==="student"&&x.status==="투표중"&&!voted.includes(x.id);
+    return `<div class="item" style="border-left-color:${AREA[x.area]?AREA[x.area][1]:'#ccc'};${x.status==="기각"?"opacity:.55":""}">
+     <div style="display:flex;justify-content:space-between"><div><b>${x.title}</b><div class="sub">${x.who} · ${won(x.amount)}</div></div><span style="font-size:12px;padding:2px 8px;border-radius:999px;background:${x.status==="배정"?"#EEF4F1":x.status==="기각"?"#E6E2DA":"#FFF6D6"}">${x.status}</span></div>
+     <p style="font-size:14px;margin-top:6px">${x.why||""}</p>
+     ${e?`<div class="ev">📊 ${x.cls.join(", ")}의 ${AREA[x.area][0]} ${e.mine}% (전교 ${e.all}%, ${e.diff>=0?"+":""}${e.diff}%p)</div>`:""}
+     <div style="margin-top:8px;display:flex;gap:6px;align-items:center">
+      ${x.status==="투표중"?`<button class="mini" style="${voted.includes(x.id)?"background:#C9527A;color:#fff":"color:#C9527A;border-color:#C9527A"}" ${canVote?`onclick="vote('${x.id}')"`:"disabled"}>♥ ${voted.includes(x.id)?"찬성함":"찬성"} ${x.votes}</button>`:`<span class="sub">찬성 ${x.votes}표</span>`}
+      ${view==="admin"&&x.status==="투표중"?`<button class="mini" style="background:#3E6B5E;color:#fff;border:none" ${x.amount>left?"disabled":""} onclick="decide('${x.id}','배정')">배정${x.amount>left?"(부족)":""}</button><button class="mini" onclick="decide('${x.id}','기각')">기각</button>`:""}
+     </div></div>`;}).join("")||'<div class="sub" style="margin-top:14px">아직 제안이 없어요.</div>';
+}
+function openForm(){
+  const f=document.getElementById("form");let cls=[],area="S";
+  f.innerHTML=`<div style="background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:10px">
+   <div style="display:flex;gap:6px">${Object.entries(AREA).map(([k,a])=>`<button class="mini areab" data-k="${k}" style="flex:1">${k} ${a[0]}</button>`).join("")}</div>
+   <input id="ti" placeholder="① 무엇을 살까요? (예: 리코더 30개)" style="width:100%;margin-top:6px">
+   <div style="display:flex;gap:6px;margin-top:6px"><input id="wh" placeholder="② 누가 (예: 3-1 자치회)" style="flex:1"><input id="am" type="number" placeholder="③ 금액(원)" style="width:130px"></div>
+   <div class="sub" style="margin-top:6px">어느 반을 위한 거예요?</div>
+   <div id="cls" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:4px">${CLASSES.map(c=>`<button class="mini clsb" data-c="${c}">${c}</button>`).join("")}</div>
+   <div id="evprev" class="sub" style="margin-top:6px"></div>
+   <textarea id="wy" rows="2" placeholder="왜 필요한지" style="width:100%;margin-top:6px"></textarea>
+   <button class="btn" style="width:100%;margin-top:6px" id="sub">제안 올리기</button></div>`;
+  f.querySelectorAll(".areab").forEach(b=>b.onclick=()=>{area=b.dataset.k;f.querySelectorAll(".areab").forEach(x=>x.style.background="");b.style.background=AREA[area][1];b.style.color="#fff";updEv();});
+  f.querySelectorAll(".clsb").forEach(b=>b.onclick=()=>{const c=b.dataset.c;if(cls.includes(c)){cls=cls.filter(x=>x!==c);b.style.background="";b.style.color="";}else{cls.push(c);b.style.background="#1F3A36";b.style.color="#fff";}updEv();});
+  function updEv(){const e=ev(cls,area);f.querySelector("#evprev").innerHTML=e?`📊 이 반들 ${AREA[area][0]} ${e.mine}% · 전교 ${e.all}% (${e.diff>=0?"+":""}${e.diff}%p) ${e.diff<0?"— 예산이 도움이 될 것 같아요":""}`:"";}
+  const msg=document.createElement("div");msg.className="sub";msg.style.color="#B8432F";msg.style.marginTop="6px";f.querySelector("#sub").after(msg);
+  f.querySelector("#sub").onclick=async()=>{
+    const title=f.querySelector("#ti").value.trim();
+    const amount=f.querySelector("#am").value.trim();
+    if(!title){msg.textContent="① '무엇을 살까요?'를 채워 주세요.";return;}
+    if(!amount){msg.textContent="③ 금액(원)을 오른쪽 칸에 숫자로 넣어 주세요.";return;}
+    if(!cls.length){msg.textContent="어느 반을 위한 건지 학급을 하나 이상 눌러 주세요.";return;}
+    msg.textContent="";
+    const row={id:"P"+Date.now(),"시각":new Date().toLocaleString("ko-KR"),"영역":area,"제목":title,"제안자":f.querySelector("#wh").value.trim()||"학생","금액":amount,"대상학급":cls.join(","),"사유":f.querySelector("#wy").value.trim(),"상태":"투표중","찬성":0};
+    const btn=f.querySelector("#sub");btn.textContent="올리는 중…";btn.disabled=true;
+    try{ const res=await RAS.write("proposals","append",row); if(res&&res.error){throw new Error(res.error);} f.innerHTML="";load(); }
+    catch(e){ btn.textContent="제안 올리기";btn.disabled=false;msg.textContent="저장 실패: "+e.message+" (연결 설정을 확인하세요)"; }
+  };
+}
+async function vote(id){if(voted.includes(id))return;voted.push(id);localStorage.setItem("ras_voted",JSON.stringify(voted));
+  const it=items.find(x=>x.id==id);it.votes++;render();
+  try{await RAS.write("proposals","vote",{id:id});}catch(e){}
+}
+async function decide(id,status){const it=items.find(x=>x.id==id);it.status=status;render();
+  await RAS.write("proposals","setStatus",{id:id,status:status});
+}
+const conn=document.getElementById("conn");RAS.banner(conn);conn._onReady=load;if(RAS.conf().url)load();
+</script></body></html>

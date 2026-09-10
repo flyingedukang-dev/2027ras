@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>오늘의 RAS 체크 — 구글시트 연동</title>
+<style>
+  :root{--ink:#1F3A36;--moss:#3E6B5E;--plum:#C9527A;--sky:#3D7EA6;--paper:#FBFAF7;--line:#E6E2DA;--warn:#B8432F;--star:#F2C14E}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--paper);color:var(--ink);max-width:460px;margin:0 auto;padding:16px}
+  h1{font-size:20px}.sub{font-size:13px;color:var(--moss);margin-top:2px}
+  header{border-bottom:2px solid var(--ink);padding-bottom:10px}
+  .status{font-size:12px;padding:6px 10px;border-radius:8px;margin-top:10px}
+  .status.ok{background:#EEF4F1;color:var(--moss)}
+  .status.no{background:#FCEFE9;color:var(--warn)}
+  .status.set{background:#FFF6D6;color:#A67C00}
+  section{margin-top:16px}
+  .grid5{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
+  .grid5 button{padding:8px 0;border-radius:8px;border:1px solid var(--line);background:#fff;font:inherit;font-size:14px;cursor:pointer}
+  .grid5 button.on{background:var(--ink);color:#fff}
+  .card{background:#fff;border-radius:12px;padding:12px;margin-top:10px;border-top:6px solid var(--line)}
+  .card.R{border-color:var(--moss)}.card.A{border-color:var(--plum)}.card.S{border-color:var(--sky)}
+  .row{display:flex;align-items:center;justify-content:space-between}
+  .row b{font-size:15px}
+  .cnt{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
+  .rnd{width:52px;height:52px;border-radius:50%;border:none;font-size:22px;cursor:pointer}
+  .num{font-size:34px;font-weight:700;text-align:center;line-height:1}
+  .quick{display:flex;gap:4px;margin-top:8px}
+  .quick button{flex:1;padding:6px 0;border-radius:6px;border:1px solid var(--line);background:#fff;font:inherit;font-size:12px;cursor:pointer}
+  .pct{font-size:13px}
+  input,select,textarea{font:inherit;border:1px solid var(--line);border-radius:8px;padding:8px}
+  .save{width:100%;padding:16px;border:none;border-radius:12px;background:var(--ink);color:#fff;font-size:17px;font-weight:700;margin-top:16px;cursor:pointer}
+  .save.done{background:var(--moss)}
+  .save:disabled{background:#bbb}
+  details{margin-top:20px;font-size:13px;color:#666}
+  details input{width:100%;margin:4px 0}
+  .log{font-size:13px;background:#fff;border-radius:8px;padding:8px 12px;margin-top:6px;display:flex;justify-content:space-between;border:1px solid var(--line)}
+</style>
+<script src="roles.js"></script>
+<script>if(window.ROLES && !ROLES.guard()){throw new Error("redirect");}</script>
+</head>
+<body>
+<header>
+  <h1>오늘의 RAS 체크</h1>
+  <div class="sub">참여 인원만 누르면 끝. 저장하면 구글시트로 갑니다.</div>
+  <div id="status" class="status set">연결 설정이 필요합니다. 아래 ⚙️ 설정을 먼저 열어 주세요.</div>
+</header>
+
+<section>
+  <div class="sub">우리 반</div>
+  <div class="grid5" id="classes"></div>
+  <div style="margin-top:8px" class="sub">날짜 <input type="date" id="date"></div>
+</section>
+
+<section id="counters"></section>
+
+<section>
+  <label style="display:block;font-size:14px"><input type="checkbox" id="student"> 학생이 직접 기획한 활동이 있었어요</label>
+  <div id="dakkumBox" style="display:none;margin-top:8px">
+    <div class="sub">다꿈누리 학생 참여</div>
+    <div class="grid5" id="dakkum" style="grid-template-columns:repeat(3,1fr)"></div>
+  </div>
+  <textarea id="memo" rows="2" placeholder="특이사항 (선택) — 예: 비 와서 실내 줄넘기" style="width:100%;margin-top:8px"></textarea>
+</section>
+
+<button class="save" id="save" disabled>저장</button>
+<div id="recent"></div>
+
+<details id="settings" open>
+  <summary>⚙️ 연결 설정 (처음 한 번만)</summary>
+  <p style="margin-top:8px">구글 Apps Script 배포 후 받은 <b>웹 앱 URL</b>과 <b>열쇠말</b>을 넣으세요. 이 기기에만 저장됩니다.</p>
+  <input id="url" placeholder="https://script.google.com/macros/s/..../exec">
+  <input id="key" placeholder="열쇠말 (기본: maehwa-2027)">
+  <button onclick="saveConf()" style="padding:8px 14px;border:none;border-radius:8px;background:var(--ink);color:#fff;cursor:pointer">저장하고 연결 확인</button>
+  <p style="margin-top:8px;color:#999">설치 방법은 '구글시트_연동_설치안내.md'를 보세요.</p>
+</details>
+
+<script>
+const CLASSES = {"1-1":20,"1-2":20,"2-1":21,"2-2":21,"3-1":20,"3-2":20,"3-3":20,"4-1":22,"4-2":22,"5-1":19,"5-2":19,"5-3":19,"6-1":22};
+const DAKKUM = ["3-1","4-2","5-1","6-1"];
+const AREAS = [["R","아침독서","#3E6B5E"],["A","예술활동 (악기·미술·버스킹)","#C9527A"],["S","오아시스 아침운동","#3D7EA6"]];
+let cls = "3-1", val = {R:0,A:0,S:0}, aType = "", dakkum = "";
+
+// 설정: 이 기기(브라우저)에만 저장 — 서버 없음
+function conf(){ return { url: localStorage.getItem("ras_url")||"", key: localStorage.getItem("ras_key")||"maehwa-2027" }; }
+function saveConf(){
+  localStorage.setItem("ras_url", document.getElementById("url").value.trim());
+  localStorage.setItem("ras_key", document.getElementById("key").value.trim()||"maehwa-2027");
+  checkConn();
+}
+async function checkConn(){
+  const c = conf(); const s = document.getElementById("status");
+  if(!c.url){ s.className="status set"; s.textContent="연결 설정이 필요합니다. 아래 ⚙️ 설정을 열어 주세요."; document.getElementById("save").disabled=true; return; }
+  s.className="status set"; s.textContent="연결 확인 중…";
+  try{
+    const r = await fetch(c.url+"?key="+encodeURIComponent(c.key)+"&tab=daily");
+    const j = await r.json();
+    if(j.ok){ s.className="status ok"; s.textContent="✓ 구글시트에 연결됨 · 저장된 기록 "+j.rows.length+"건"; document.getElementById("save").disabled=false; document.getElementById("settings").open=false; showRecent(j.rows); }
+    else { s.className="status no"; s.textContent="열쇠말이 맞지 않습니다: "+(j.error||""); }
+  }catch(e){ s.className="status no"; s.textContent="연결 실패 — URL을 확인하세요. (배포 시 '모든 사용자' 접근 허용 필요)"; }
+}
+function showRecent(rows){
+  const box = document.getElementById("recent");
+  const mine = rows.filter(r=>String(r["학급"])===cls).slice(-3).reverse();
+  box.innerHTML = mine.length ? "<div class='sub' style='margin-top:14px'>"+cls+" 최근 기록</div>"+
+    mine.map(r=>`<div class="log"><span>${String(r["날짜"]).slice(5)}</span><span style="color:#3E6B5E">R${r.R}</span> <span style="color:#C9527A">A${r.A}</span> <span style="color:#3D7EA6">S${r.S}</span></div>`).join("") : "";
+}
+
+// UI 구성
+function renderClasses(){
+  document.getElementById("classes").innerHTML = Object.keys(CLASSES).map(c=>`<button data-c="${c}" class="${c===cls?'on':''}">${c}</button>`).join("");
+  document.querySelectorAll("#classes button").forEach(b=>b.onclick=()=>{ cls=b.dataset.c; val={R:0,A:0,S:0}; aType=""; dakkum=""; renderClasses(); renderCounters(); document.getElementById("dakkumBox").style.display = DAKKUM.includes(cls)?"block":"none"; conf().url&&checkConn(); });
+}
+function renderCounters(){
+  const max = CLASSES[cls];
+  document.getElementById("counters").innerHTML = AREAS.map(([k,name,col])=>{
+    const v=val[k], pct=Math.round(v/max*100);
+    return `<div class="card ${k}">
+      <div class="row"><b>${k} ${name}</b><span class="pct" style="color:${pct<70?'#B8432F':'#3E6B5E'}">${pct}%</span></div>
+      <div class="cnt">
+        <button class="rnd" style="background:#E6E2DA" onclick="bump('${k}',-1)">−</button>
+        <div><div class="num">${v}</div><div class="sub" style="text-align:center">/ ${max}명</div></div>
+        <button class="rnd" style="background:${col};color:#fff" onclick="bump('${k}',1)">＋</button>
+      </div>
+      <div class="quick">${[0,0.5,0.75,1].map(f=>`<button onclick="setVal('${k}',${Math.round(max*f)})">${f===0?'0':f===1?'전원':f*100+'%'}</button>`).join("")}</div>
+      ${k==='A'&&v>0?`<div class="quick">${["1인1악기","미술","버스킹","기타"].map(t=>`<button onclick="setAType('${t}')" style="${aType===t?'background:#C9527A;color:#fff':''}">${t}</button>`).join("")}</div>`:""}
+    </div>`;
+  }).join("");
+}
+function bump(k,d){ val[k]=Math.max(0,Math.min(CLASSES[cls],val[k]+d)); renderCounters(); }
+function setVal(k,v){ val[k]=v; renderCounters(); }
+function setAType(t){ aType=t; renderCounters(); }
+
+// 다꿈누리
+document.getElementById("dakkum").innerHTML = ["전원","일부","없음"].map(t=>`<button onclick="dakkum='${t}';[...this.parentNode.children].forEach(x=>x.classList.remove('on'));this.classList.add('on')">${t}</button>`).join("");
+
+// 저장 → Apps Script로 전송
+document.getElementById("save").onclick = async ()=>{
+  const c=conf(); const btn=document.getElementById("save");
+  const row = { "날짜":document.getElementById("date").value, "학급":cls, "정원":CLASSES[cls],
+    "R":val.R, "A":val.A, "S":val.S, "예술종류":aType, "학생기획":document.getElementById("student").checked?"Y":"N",
+    "다꿈누리":dakkum, "메모":document.getElementById("memo").value };
+  btn.textContent="저장 중…"; btn.disabled=true;
+  try{
+    // Apps Script는 text/plain로 받아야 CORS 프리플라이트를 피함
+    await fetch(c.url,{ method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"},
+      body: JSON.stringify({ key:c.key, tab:"daily", action:"upsertDaily", row:row }) });
+    btn.textContent="저장했어요 ✓"; btn.className="save done";
+    document.getElementById("memo").value=""; document.getElementById("student").checked=false;
+    setTimeout(()=>{ btn.textContent="저장"; btn.className="save"; btn.disabled=false; checkConn(); },1500);
+  }catch(e){ btn.textContent="저장 실패 — 다시"; btn.className="save"; btn.disabled=false; }
+};
+
+// 초기화
+document.getElementById("date").value = new Date().toISOString().slice(0,10);
+document.getElementById("url").value = conf().url;
+document.getElementById("key").value = conf().key;
+renderClasses(); renderCounters();
+document.getElementById("dakkumBox").style.display = DAKKUM.includes(cls)?"block":"none";
+if(conf().url) checkConn();
+</script>
+<script>if(window.ROLES)ROLES.badge();</script>
+</body>
+</html>

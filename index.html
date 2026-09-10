@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>매화 RAS-D 연구 개요 — 데모 시연</title>
+<style>
+  :root{--ink:#1F3A36;--moss:#3E6B5E;--plum:#C9527A;--sky:#3D7EA6;--paper:#FBFAF7;--line:#E6E2DA;--warn:#B8432F;--star:#F2C14E}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--paper);color:var(--ink);line-height:1.65}
+  .wrap{max-width:1000px;margin:0 auto;padding:0 18px 80px}
+  /* 상단 고정 내비 */
+  nav{position:sticky;top:0;z-index:20;background:rgba(251,250,247,.92);backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
+  nav .in{max-width:1000px;margin:0 auto;display:flex;gap:4px;overflow-x:auto;padding:8px 12px}
+  nav a{white-space:nowrap;font-size:13px;padding:6px 12px;border-radius:999px;color:var(--ink);text-decoration:none}
+  nav a:hover{background:var(--ink);color:#fff}
+  /* 히어로 */
+  header.hero{padding:44px 0 30px;text-align:center}
+  .kicker{font-size:14px;color:var(--moss);letter-spacing:.02em}
+  h1{font-size:38px;letter-spacing:-.02em;margin:8px 0}
+  .slogan{display:inline-block;background:var(--ink);color:#fff;font-weight:700;padding:6px 16px;border-radius:999px;margin-top:8px}
+  .sub{color:#555;margin-top:14px;font-size:15px}
+  .meta{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:16px;font-size:13px}
+  .meta span{background:#fff;border:1px solid var(--line);border-radius:999px;padding:5px 12px}
+  section{padding:34px 0;border-top:1px solid var(--line)}
+  h2{font-size:24px;margin-bottom:4px}
+  h2 .num{color:var(--star);font-weight:800;margin-right:8px}
+  .lead{color:#666;font-size:14px;margin-bottom:18px}
+  /* 모형 4단계 */
+  .flow{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  .stg{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;cursor:pointer;transition:.15s;border-top:6px solid var(--line)}
+  .stg:hover{transform:translateY(-3px);box-shadow:0 6px 18px rgba(31,58,54,.12)}
+  .stg.d{border-top-color:var(--moss)} .stg.de{border-top-color:var(--plum)} .stg.do{border-top-color:var(--sky)} .stg.da{border-top-color:var(--ink)}
+  .stg h3{font-size:16px}.stg .en{font-size:12px;color:#999}
+  .stg p{font-size:13px;color:#555;margin-top:6px}
+  .stg .tools{margin-top:8px;display:flex;flex-wrap:wrap;gap:4px}
+  .pill{font-size:11px;padding:2px 8px;border-radius:999px;background:var(--paper);border:1px solid var(--line)}
+  .pill.ai{background:#FFF6D6;border-color:#EAD37A;color:#8a6d00}
+  /* 도구 그리드 */
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;position:relative;text-decoration:none;color:inherit;display:block;transition:.15s}
+  .card:hover{transform:translateY(-3px);box-shadow:0 6px 18px rgba(31,58,54,.12)}
+  .card.key{border-color:var(--star);box-shadow:0 0 0 2px rgba(242,193,78,.3)}
+  .card h3{font-size:16px}
+  .card p{font-size:13px;color:#555;margin-top:4px}
+  .card .go{font-size:12px;color:var(--sky);margin-top:8px;display:inline-block}
+  .tagrow{position:absolute;top:12px;right:12px;display:flex;gap:4px}
+  .t{font-size:10px;padding:2px 7px;border-radius:999px;font-weight:700}
+  .t.star{background:var(--star);color:#5a4300}.t.ai{background:#FFF6D6;color:#8a6d00}.t.live{background:#EEF4F1;color:var(--moss)}
+  /* 표 */
+  table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;font-size:13.5px}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+  th{background:#EEF2F0}
+  /* 타임라인 */
+  .tl{position:relative;padding-left:24px}
+  .tl::before{content:"";position:absolute;left:7px;top:4px;bottom:4px;width:2px;background:var(--line)}
+  .tl .row{position:relative;margin-bottom:14px}
+  .tl .row::before{content:"";position:absolute;left:-21px;top:5px;width:12px;height:12px;border-radius:50%;background:var(--plum)}
+  .tl .when{font-weight:700;font-size:14px}
+  .tl .what{font-size:13px;color:#555}
+  .note{background:#FCEFE9;border:1px solid var(--warn);border-radius:12px;padding:14px;font-size:13.5px;color:#7a2c1e}
+  .ok{background:#EEF4F1;border-color:var(--moss);color:#265244}
+  footer{padding:30px 0;text-align:center;font-size:12px;color:#999}
+  /* 모달 */
+  .modal{position:fixed;inset:0;background:rgba(31,58,54,.5);display:none;align-items:center;justify-content:center;padding:18px;z-index:50}
+  .modal.on{display:flex}
+  .modal .box{background:#fff;border-radius:16px;max-width:440px;padding:22px}
+  .modal h3{font-size:20px}.modal .en{color:#999;font-size:13px}
+  .modal ul{margin:12px 0 0 18px;font-size:14px}.modal li{margin-bottom:6px}
+  .modal button{margin-top:16px;width:100%;padding:10px;border:none;border-radius:10px;background:var(--ink);color:#fff;font:inherit;cursor:pointer}
+  @media(max-width:760px){.flow{grid-template-columns:1fr 1fr}.grid{grid-template-columns:1fr}h1{font-size:28px}}
+  @media print{nav{display:none}.card:hover,.stg:hover{transform:none;box-shadow:none}}
+</style>
+<script src="roles.js"></script>
+</head>
+<body>
+<nav><div class="in">
+  <a href="#hero">개요</a><a href="#model">모형</a><a href="#tools">도구</a>
+  <a href="#indi">지표</a><a href="#time">일정</a><a href="#guide">요강대응</a><a href="#ethics">원칙</a><a href="#all">전체</a><a href="hub.html">시연허브</a>
+</div></nav>
+
+<div class="wrap">
+<header class="hero" id="hero">
+  <div class="kicker">제21회(2027) 디지털교육연구대회 · 디지털 학교경영분과 · 공동연구(4~10인)</div>
+  <h1>폰 오프 학교의<br>인공지능·데이터 기반 학교경영</h1>
+  <div class="slogan">폰 OFF, 매화 RAS ON</div>
+  <p class="sub">수원매화초등학교 13학급 265명 · 13개국 다문화(다꿈누리) · 독서·예술문화·스포츠(RAS)를 데이터로 경영하는 <b>RAS-D 모형</b></p>
+  <div class="meta"><span>운영 2027.3 ~ 8</span><span>도구 17종(실연동 6종)</span><span>⭐ 발표 핵심 · <span style="color:#8a6d00">AI</span> 실제 동작</span></div>
+  <div style="margin-top:20px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+    <a href="hub.html" style="background:var(--ink);color:#fff;text-decoration:none;padding:12px 22px;border-radius:999px;font-weight:700">▶ 연결 시연 허브 열기</a>
+    <a href="gate.html" style="background:var(--plum);color:#fff;text-decoration:none;padding:12px 22px;border-radius:999px;font-weight:700">🔑 역할 선택하고 시작하기</a>
+    <a href="#all" style="background:#fff;color:var(--ink);text-decoration:none;padding:12px 22px;border-radius:999px;border:1px solid var(--line);font-weight:600">모든 화면 보기</a>
+  </div>
+</header>
+
+<section id="model">
+  <h2><span class="num">1</span>RAS-D 경영 모형</h2>
+  <p class="lead">진단 → 설계 → 실천 → 환류. 카드를 누르면 각 단계에서 무엇을 하는지 봅니다.</p>
+  <div class="flow">
+    <div class="stg d" onclick="openM('d')"><div class="en">Diagnosis</div><h3>진단</h3><p>학교의 현재를 교사·학생·학부모 눈으로 잰다</p><div class="tools"><span class="pill">진단 설문</span><span class="pill ai">자유응답 AI</span></div></div>
+    <div class="stg de" onclick="openM('de')"><div class="en">Design</div><h3>설계</h3><p>학생이 데이터로 예산까지 정한다</p><div class="tools"><span class="pill">참여예산</span><span class="pill">학생 게시판</span></div></div>
+    <div class="stg do" onclick="openM('do')"><div class="en">Do</div><h3>실천</h3><p>하루를 기록하고 학생에게 돌려준다</p><div class="tools"><span class="pill">담임 입력</span><span class="pill">매화나무</span></div></div>
+    <div class="stg da" onclick="openM('da')"><div class="en">Data</div><h3>환류</h3><p>읽고, 결정하고, 이유를 남긴다</p><div class="tools"><span class="pill ai">AI 보좌관</span><span class="pill">결정 일지</span></div></div>
+  </div>
+</section>
+
+<section id="tools">
+  <h2><span class="num">2</span>도구 — 눌러서 시연</h2>
+  <p class="lead">실연동(구글시트 연결) 6종은 카드를 누르면 실제 화면으로 이동합니다. 같은 폴더에 파일이 있을 때 작동합니다.</p>
+  <div class="grid">
+    <a class="card key" href="input.html"><div class="tagrow"><span class="t star">⭐</span><span class="t live">실연동</span></div><h3>담임 입력</h3><p>참여 인원 30초 입력 · 모든 데이터의 출발점</p><span class="go">시연 열기 →</span></a>
+    <a class="card key" href="dashboard.html"><div class="tagrow"><span class="t star">⭐</span><span class="t ai">AI</span><span class="t live">실연동</span></div><h3>대시보드 · AI 보좌관</h3><p>학급 현황 집계 + 발견·조치 제안</p><span class="go">시연 열기 →</span></a>
+    <a class="card key" href="tree.html"><div class="tagrow"><span class="t star">⭐</span><span class="t live">실연동</span></div><h3>현관 매화나무</h3><p>실천할수록 가지에 꽃 · 폰프리의 상징</p><span class="go">시연 열기 →</span></a>
+    <a class="card key" href="budget.html"><div class="tagrow"><span class="t star">⭐</span><span class="t live">실연동</span></div><h3>학생 참여예산</h3><p>데이터 근거로 학생이 예산 배분·투표</p><span class="go">시연 열기 →</span></a>
+    <a class="card key" href="journal.html"><div class="tagrow"><span class="t star">⭐</span><span class="t live">실연동</span></div><h3>교장의 결정 일지</h3><p>AI 제안·채택·기각 이유를 공개</p><span class="go">시연 열기 →</span></a>
+    <a class="card" href="survey.html"><div class="tagrow"><span class="t ai">AI</span><span class="t live">실연동</span></div><h3>진단 설문</h3><p>교사·학생·학부모 · 5개 언어 · 2분</p><span class="go">시연 열기 →</span></a>
+  </div>
+  <p class="lead" style="margin-top:14px">그 밖에 자유응답 분석·주간 편지·별이 사서·장서 태깅·날씨예보·동네 맵·데이터 카페·어린이 경영회의·다꿈 서포터즈 등 샘플 화면이 있습니다(부록).</p>
+</section>
+
+<section id="indi">
+  <h2><span class="num">3</span>측정 지표 8종</h2>
+  <p class="lead">사전·사후를 비교해 변화를 수치로 증명합니다. 3월 첫 주 기준선이 핵심입니다.</p>
+  <table>
+    <tr><th style="width:26%">지표</th><th>측정 방법·시기</th></tr>
+    <tr><td>① 진단 9요소</td><td>교사·학생·학부모 5점 척도, 3·6·8월</td></tr>
+    <tr><td>② 일상 실천</td><td>학급 R·A·S 주간 참여율, 매주(담임 입력)</td></tr>
+    <tr><td>③ 학생 주도성</td><td>참여예산 배분 건수·데이터 근거, 학생 기획 건수</td></tr>
+    <tr><td>④ 공간 접근성</td><td>도서관·음악실·체육관 이용(운영 시 기록)</td></tr>
+    <tr><td>⑤ 포용성</td><td>다꿈누리 참여율과 전교 평균의 격차, 월별</td></tr>
+    <tr><td>⑥ 환류</td><td>환류 사례 수, AI 제안 채택률·개선 사례</td></tr>
+    <tr><td>⑦ 교사 시간</td><td>RAS 업무 시간 사전·사후, 3·7월 2주씩</td></tr>
+    <tr><td>⑧ 가정·지역</td><td>다국어 편지 열람, 가족 나들이 인증, 학기별</td></tr>
+  </table>
+</section>
+
+<section id="time">
+  <h2><span class="num">4</span>추진 일정</h2>
+  <div class="tl">
+    <div class="row"><div class="when">2026.10 ~ 2027.2 · 준비</div><div class="what">도구 완성·태블릿 설치, 동의서, 장서 태깅, 팀·서포터즈 구성, 헌장 제정 (데이터 수집 없음)</div></div>
+    <div class="row"><div class="when">2027.3 1~2주 · 기준선</div><div class="what">사전 진단(다국어), 교사 시간 1차 기록 — 도구 가동 전 기준</div></div>
+    <div class="row"><div class="when">2027.3 3주~ · 본 운영</div><div class="what">담임 입력, 대시보드·AI 보좌관·결정 일지, 매화나무 점등, 월요 날씨예보</div></div>
+    <div class="row"><div class="when">2027.4~6 · 운영·중간</div><div class="what">참여예산 1차(4월), 어린이 경영회의·다꿈 서포터즈·데이터 카페 월 1회, 6월 중간 진단</div></div>
+    <div class="row"><div class="when">2027.7 · 2차 측정</div><div class="what">교사 시간 2차, 참여예산 2차, 준실험 비교 정리</div></div>
+    <div class="row"><div class="when">2027.8 · 마무리</div><div class="what">사후 진단, 결과 분석, 보고서·증빙 완성 (9월 제출)</div></div>
+  </div>
+</section>
+
+<section id="guide">
+  <h2><span class="num">5</span>요강 대응</h2>
+  <p class="lead">디지털 학교경영분과 심사 배점과 제출 규정에 맞춘 지점입니다.</p>
+  <table>
+    <tr><th>심사 항목(배점)</th><th>본 연구의 대응</th></tr>
+    <tr><td>연구목적·방법 (30)</td><td>다문화·폰프리 특성의 RAS-D 독창성, 인적·물적 자원 배정</td></tr>
+    <tr><td>연구 내용 (20)</td><td>조직·예산·시설·업무효율·학생지도 개선을 4단계로</td></tr>
+    <tr><td>연구 결과 (10)</td><td>진단·시간·참여율 사전·사후 수치</td></tr>
+    <tr><td><b>일반화·시사성 (40)</b></td><td><b>템플릿·매뉴얼·구글시트 연동 공개 + 구성원 실제 변화</b> — 최대 배점</td></tr>
+  </table>
+  <div class="note" style="margin-top:14px"><b>필수 규정(제20회 기준, 제21회 재확인):</b> 본문 20쪽·요약 5쪽·참고자료 10쪽 이내 · HWP 바탕체·지정 여백 · 인쇄본 6부 중 5부 블라인드·흑백 양면 · 교사 4~10인 공동연구(교장은 확인자) · 표절(6어절·1문장 일치, 카피킬러 20%) 및 외부 그림·폰트 저작권·생성형 AI 연령 약관 점검.</div>
+</section>
+
+<section id="ethics">
+  <h2><span class="num">6</span>절제된 디지털 경영 헌장</h2>
+  <p class="lead">"더 많이"가 아니라 "꼭 필요한 만큼". 재지 않기로 한 것을 선언합니다.</p>
+  <div class="grid">
+    <div class="card"><h3>재지 않는다</h3><p>학생 개인 순위·점수 없음. 단위는 학급·학교, 비교는 순위가 아닌 '봉오리와 꽃'</p></div>
+    <div class="card"><h3>학생 화면 0</h3><p>입력·열람은 교사·자치회 대표가. 학생은 현판·방송·종이로 결과를 만남</p></div>
+    <div class="card"><h3>AI는 제안만·교사 매개</h3><p>결정은 사람이. 학생 대면 AI는 교사 계정으로 운영해 연령 약관 준수</p></div>
+    <div class="card"><h3>개인정보 미수집</h3><p>학생 이름·얼굴은 AI에 보내지 않고 처음부터 식별정보 미수집</p></div>
+    <div class="card"><h3>원자료 보관</h3><p>대회 규정상 원자료는 심사 발표일까지, 입상 시 1년 이상 보관</p></div>
+    <div class="card"><h3>교사 시간 환급</h3><p>새 도구가 시간을 늘리면 고치거나 뺀다. 3·7월 시간 기록이 판단 기준</p></div>
+  </div>
+  <div class="note ok" style="margin-top:16px"><b>집필 원칙:</b> AI는 자료 조사·정리·교정까지. 연구의 본체(운영·데이터·해석·집필)는 교사 팀이 직접 — 대리작·표절 규정을 지키고, 무엇보다 팀이 실제로 겪은 6개월이 곧 보고서의 내용입니다.</div>
+</section>
+
+<section id="all">
+  <h2><span class="num">7</span>모든 화면 바로가기</h2>
+  <p class="lead">실연동 6종은 구글시트에 연결됩니다. 나머지는 샘플 데이터로 도는 시연용 화면입니다. 같은 폴더에 파일이 있을 때 열립니다.</p>
+  <h3 style="margin:6px 0 8px;font-size:15px;color:var(--moss)">실연동 (구글시트)</h3>
+  <div class="grid">
+    <a class="card" href="input.html"><h3>담임 입력</h3><p>참여 인원 30초 입력</p><span class="go">열기 →</span></a>
+    <a class="card" href="dashboard.html"><h3>대시보드·AI 보좌관</h3><p>집계 + 조치 제안</p><span class="go">열기 →</span></a>
+    <a class="card" href="tree.html"><h3>현관 매화나무</h3><p>학급 가지에 꽃</p><span class="go">열기 →</span></a>
+    <a class="card" href="budget.html"><h3>학생 참여예산</h3><p>제안·투표·배정</p><span class="go">열기 →</span></a>
+    <a class="card" href="journal.html"><h3>교장의 결정 일지</h3><p>제안·이유 공개</p><span class="go">열기 →</span></a>
+    <a class="card" href="survey.html"><h3>진단 설문</h3><p>5개 언어 · 2분</p><span class="go">열기 →</span></a>
+  </div>
+  <h3 style="margin:16px 0 8px;font-size:15px;color:var(--moss)">시연용 (샘플 · 단독 HTML, 클릭하면 열림)</h3>
+  <p class="lead" style="margin-bottom:10px">AI가 들어간 화면은 브라우저에 Claude API 키를 넣으면 실제로 동작하고, 키가 없으면 샘플 응답으로 시연됩니다. 각 화면 상단에서 키를 설정합니다.</p>
+  <div class="grid">
+    <a class="card" href="analyzer.html"><div class="tagrow"><span class="t ai">AI</span></div><h3>자유응답 분석</h3><p>다국어 응답 번역·분류·요약</p><span class="go">열기 →</span></a>
+    <a class="card" href="letter.html"><div class="tagrow"><span class="t ai">AI</span></div><h3>우리 반 주간 편지</h3><p>데이터→편지 초안·다국어</p><span class="go">열기 →</span></a>
+    <a class="card" href="librarian.html"><div class="tagrow"><span class="t ai">AI</span></div><h3>별이 AI 사서</h3><p>교내 장서 안에서 추천</p><span class="go">열기 →</span></a>
+    <a class="card" href="tagger.html"><div class="tagrow"><span class="t ai">AI</span></div><h3>장서 태깅 도우미</h3><p>대상학년·주제어 일괄</p><span class="go">열기 →</span></a>
+    <a class="card" href="weather.html"><div class="tagrow"><span class="t ai">AI</span></div><h3>RAS 날씨예보</h3><p>학급 날씨 + 방송 대본</p><span class="go">열기 →</span></a>
+    <a class="card" href="map.html"><h3>동네 매화 RAS 맵</h3><p>가족 나들이 인증</p><span class="go">열기 →</span></a>
+    <a class="card" href="cafe.html"><h3>데이터 카페</h3><p>교사 PLC 30분 타이머</p><span class="go">열기 →</span></a>
+    <a class="card" href="kidsmeeting.html"><div class="tagrow"><span class="t ai">AI</span></div><h3>어린이 경영회의</h3><p>학생이 데이터 읽고 제안</p><span class="go">열기 →</span></a>
+    <a class="card" href="supporters.html"><div class="tagrow"><span class="t ai">AI</span></div><h3>다꿈 서포터즈</h3><p>13개국 학부모 참여</p><span class="go">열기 →</span></a>
+    <a class="card" href="board.html"><h3>학생 활동 게시판</h3><p>제안→실행→후기</p><span class="go">열기 →</span></a>
+    <a class="card" href="schoolhome.html"><h3>학교 홈페이지(소개)</h3><p>전체를 묶는 학교 홈</p><span class="go">열기 →</span></a>
+  </div>
+  </section>
+
+<footer>수원매화초등학교 · 모두가 꽃(매화) · 데모 시연용 페이지 · 데이터는 예시입니다. 인쇄(Ctrl+P)하면 내비게이션 없이 출력됩니다.</footer>
+</div>
+
+<div class="modal" id="modal" onclick="if(event.target===this)closeM()">
+  <div class="box" id="mbox"></div>
+</div>
+
+<script>
+const M={
+ d:{en:"Diagnosis",t:"진단",li:["교사·학생·학부모가 진단 9요소를 학기별 응답(5개 언어, 표정 척도)","자유응답을 AI가 번역·9요소 분류·요약해 다문화 가정 목소리를 경영에 반영","3월 첫 주 사전 응답이 연구 전체의 기준선"]},
+ de:{en:"Design",t:"설계",li:["학생자치회가 주간 RAS 일과표와 활동을 기획","연 100만 원 참여예산을 데이터 근거로 배분·투표","별이 AI 사서가 교내 장서 안에서만 책 추천"]},
+ do:{en:"Do",t:"실천",li:["담임이 매일 참여 인원 30초 입력(모든 데이터의 출발점)","현관 매화나무: 실천할수록 학급 가지에 꽃","학급 데이터로 학부모 주간 편지 초안+8개 언어 번역"]},
+ da:{en:"Data",t:"환류",li:["AI 보좌관이 발견·원인·조치를 제안 → 교장이 채택·보류·기각","결정 일지: 제안과 결정 이유를 학부모·학생에 공개(기각도 공개)","데이터 카페: 교사 월 1회 30분 PLC, '다음 달 바꿀 것 하나'"]},
+};
+function openM(k){const m=M[k];document.getElementById("mbox").innerHTML=
+ `<div class="en">${m.en}</div><h3>${m.t}</h3><ul>${m.li.map(x=>`<li>${x}</li>`).join("")}</ul><button onclick="closeM()">닫기</button>`;
+ document.getElementById("modal").classList.add("on");}
+function closeM(){document.getElementById("modal").classList.remove("on");}
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeM();});
+</script>
+<script>if(window.ROLES)ROLES.badge();</script>
+</body>
+</html>
