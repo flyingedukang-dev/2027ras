@@ -1,19 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>매화 RAS 경영 대시보드 — 실데이터</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js">
-async function _loadRoster(){
-  try{
-    if(!(window.RAS&&RAS.roster))return false;
-    const r=await RAS.roster();
-    if(r&&r.length){
-      CLASSES=RAS.classesList(r);
-      if(typeof DAKKUM!=="undefined") DAKKUM=RAS.dakkumList(r);
-      return true;
-    }
-  }catch(e){}
-  return false;
-}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </script>
 <style>
 :root{--ink:#1F3A36;--moss:#3E6B5E;--plum:#C9527A;--sky:#3D7EA6;--paper:#FBFAF7;--line:#E6E2DA;--warn:#B8432F;--star:#F2C14E}
@@ -48,6 +36,18 @@ textarea,input,select{font:inherit;border:1px solid var(--line);border-radius:8p
 <script src="ras-config.js"></script>
 <script src="ai-config.js"></script>
 <script>
+async function _loadRoster(){
+  try{
+    if(!(window.RAS&&RAS.roster))return false;
+    const r=await RAS.roster();
+    if(r&&r.length){
+      CLASSES=RAS.classesList(r);
+      if(typeof DAKKUM!=="undefined") DAKKUM=RAS.dakkumList(r);
+      return true;
+    }
+  }catch(e){}
+  return false;
+}
 let CLASSES=["1-1","1-2","2-1","2-2","3-1","3-2","3-3","4-1","4-2","5-1","5-2","5-3","6-1"];
 let DAKKUM=["3-1","4-2","5-1","6-1"];
 const COL={R:"#3E6B5E",A:"#C9527A",S:"#3D7EA6"},NAME={R:"독서",A:"예술문화",S:"스포츠"};

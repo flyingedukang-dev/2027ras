@@ -18,7 +18,9 @@ input,select,textarea{font:inherit;border:1px solid var(--line);border-radius:8p
 <div class="tabs"><button class="on" data-v="student" onclick="setView('student')">학생</button><button data-v="admin" onclick="setView('admin')">교사</button></div></header>
 <div id="conn" style="margin-top:10px"></div>
 <div id="app"></div>
-<script src="ras-config.js">
+<script src="ras-config.js"></script>
+</script>
+<script>
 async function _loadRoster(){
   try{
     if(!(window.RAS&&RAS.roster))return false;
@@ -31,8 +33,6 @@ async function _loadRoster(){
   }catch(e){}
   return false;
 }
-</script>
-<script>
 const TOTAL=1000000, AREA={R:["독서","#3E6B5E"],A:["예술문화","#C9527A"],S:["스포츠","#3D7EA6"]};
 let CLASSES=["1-1","1-2","2-1","2-2","3-1","3-2","3-3","4-1","4-2","5-1","5-2","5-3","6-1"];
 const won=n=>(+n).toLocaleString("ko-KR")+"원";
