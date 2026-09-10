@@ -1,0 +1,125 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>학년말 시상 집계 · 교사</title>
+<script src="roles.js"></script><script>if(window.ROLES && !ROLES.guard()){throw new Error("redirect");}</script>
+<script src="ras-config.js"></script>
+<style>
+:root{--ink:#1F3A36;--moss:#3E6B5E;--plum:#C9527A;--sky:#3D7EA6;--paper:#FBFAF7;--line:#E6E2DA;--warn:#B8432F;--star:#F2C14E}
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;background:var(--paper);color:var(--ink);max-width:820px;margin:0 auto;padding:16px}
+header{border-bottom:2px solid var(--ink);padding-bottom:10px}h1{font-size:20px}.sub{font-size:13px;color:var(--moss)}
+.note{background:#EEF4F1;border-radius:10px;padding:12px;margin-top:12px;font-size:13px;line-height:1.6}
+.bar{display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap}
+select,input{font:inherit;border:1px solid var(--line);border-radius:8px;padding:8px}
+button{font:inherit;cursor:pointer;border:none;border-radius:8px;padding:8px 14px;background:var(--ink);color:#fff;font-weight:600}
+.mini{background:#fff;color:var(--ink);border:1px solid var(--line);font-weight:400}
+.award{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:14px;border-top:6px solid var(--star)}
+.award h2{font-size:17px}.award .crit{font-size:12px;color:#777;margin:4px 0 10px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.code{background:#FBFAF7;border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-family:monospace;font-weight:700}
+.cls-award{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:10px;border-left:6px solid var(--moss)}
+@media print{.bar,.note,header .sub,button{display:none}}
+</style></head><body>
+<header><h1>학년말 시상 집계</h1><div class="sub">순위가 아니라 '기준을 넘으면 받는' 방식 · 개인은 코드로만 표시</div></header>
+<div id="conn" style="margin-top:10px"></div>
+<div class="bar">
+  <span class="sub">기간</span>
+  <input type="date" id="from"><span>~</span><input type="date" id="to">
+  <span class="sub">반</span><select id="cls"><option value="전체">전체</option></select>
+  <button onclick="run()">집계</button>
+  <button class="mini" onclick="window.print()">인쇄</button>
+</div>
+<div class="note">
+  이 명단은 <b>익명 코드</b>로 나옵니다(예: 3-1-05). 누가 몇 번인지는 <b>담임 선생님이 종이 명단으로</b> 확인해 실명 상장을 드리세요.
+  시스템에는 이름·개인정보가 없습니다. 순위(1·2등)를 매기지 않고, 기준을 넘으면 모두 받습니다.
+</div>
+<div id="out"></div>
+<script>
+let roster=[];
+async function init(){
+  try{ roster=(window.RAS&&RAS.roster)?await RAS.roster():[]; }catch(e){ roster=[]; }
+  const sel=document.getElementById("cls");
+  (roster.length?roster.map(x=>x.cls):[]).forEach(c=>{ const o=document.createElement("option"); o.textContent=c; sel.appendChild(o); });
+  // 기본 기간: 최근 3개월
+  const t=new Date(); const f=new Date(); f.setMonth(f.getMonth()-3);
+  document.getElementById("to").value=t.toISOString().slice(0,10);
+  document.getElementById("from").value=f.toISOString().slice(0,10);
+}
+function inRange(d,f,t){ const s=String(d).slice(0,10); return (!f||s>=f)&&(!t||s<=t); }
+
+async function run(){
+  const out=document.getElementById("out"); out.innerHTML='<p class="sub">집계 중…</p>';
+  const f=document.getElementById("from").value, t=document.getElementById("to").value;
+  const clsFilter=document.getElementById("cls").value;
+  let checks=[];
+  try{ checks=await RAS.read("checks"); }catch(e){ out.innerHTML='<p class="sub">데이터를 불러오지 못했어요.</p>'; return; }
+  checks=checks.filter(r=>inRange(r["날짜"],f,t) && (clsFilter==="전체"||String(r["학급"]).trim()===clsFilter));
+  if(!checks.length){ out.innerHTML='<p class="sub">이 기간에 학생 체크 데이터가 없어요.</p>'; return; }
+
+  // 코드별 집계
+  const byCode={};
+  checks.forEach(r=>{
+    const c=String(r["코드"]).trim(); if(!c)return;
+    if(!byCode[c])byCode[c]={days:new Set(),R:0,A:0,S:0,P:0,first:null,last:null,dates:[]};
+    const day=String(r["날짜"]).slice(0,10);
+    byCode[c].days.add(day);
+    byCode[c].R+=Number(r["R"])||0; byCode[c].A+=Number(r["A"])||0; byCode[c].S+=Number(r["S"])||0; byCode[c].P+=Number(r["폰프리"])||0;
+    byCode[c].dates.push(day);
+  });
+  const codes=Object.keys(byCode);
+  const totalDays=new Set(checks.map(r=>String(r["날짜"]).slice(0,10))).size;
+
+  // 기준 (학교가 조정 가능)
+  const CRIT_DAYS = Math.max(1, Math.round(totalDays*0.7));   // 전체 체크일의 70% 이상 참여 → 꾸준상
+  const CRIT_PHONE = Math.max(1, Math.round(totalDays*0.6));  // 폰OFF 60% 이상 → 실천상
+
+  // 꾸준상
+  const steady=codes.filter(c=>byCode[c].days.size>=CRIT_DAYS).sort();
+  // 폰 OFF 실천상
+  const phone=codes.filter(c=>byCode[c].P>=CRIT_PHONE).sort();
+  // 성장상: 기간 전반 대비 후반 참여일 증가
+  const growth=codes.filter(c=>{
+    const ds=byCode[c].dates.map(d=>d).sort(); if(ds.length<4)return false;
+    const mid=ds[Math.floor(ds.length/2)];
+    const early=new Set(ds.filter(d=>d<mid)).size, late=new Set(ds.filter(d=>d>=mid)).size;
+    return late>early;
+  }).sort();
+
+  function awardBox(title,crit,list){
+    return `<div class="award"><h2>🏅 ${title} · ${list.length}명</h2><div class="crit">${crit}</div>`
+      + (list.length? `<div class="chips">${list.map(c=>`<span class="code">${c}</span>`).join("")}</div>` : '<div class="sub">해당 없음</div>')
+      + `</div>`;
+  }
+
+  // 학급 상 (daily 기반)
+  let clsAwards="";
+  try{
+    const daily=await RAS.read("daily");
+    const drows=daily.filter(r=>inRange(r["날짜"],f,t));
+    if(drows.length){
+      const m={};
+      drows.forEach(r=>{ const c=String(r["학급"]).trim(); const cap=parseFloat(String(r["정원"]).replace(/[^0-9.]/g,""))||0; if(!cap)return;
+        const p=(((+r["R"]||0)+(+r["A"]||0)+(+r["S"]||0))/(cap*3))*100;
+        if(!m[c])m[c]={vals:[],dates:[]}; m[c].vals.push(p); m[c].dates.push({d:String(r["날짜"]).slice(0,10),p:p});
+      });
+      const clsAvg=Object.keys(m).map(c=>({c,avg:Math.round(m[c].vals.reduce((a,b)=>a+b,0)/m[c].vals.length)}));
+      const bloomThresh=80; // 평균 80% 이상 → 만개상
+      const bloom=clsAvg.filter(x=>x.avg>=bloomThresh).sort((a,b)=>b.avg-a.avg);
+      // 성장: 전반 대비 후반 평균 상승
+      const grow=Object.keys(m).filter(c=>{ const ds=m[c].dates.slice().sort((a,b)=>a.d<b.d?-1:1); if(ds.length<4)return false; const h=Math.floor(ds.length/2);
+        const e=ds.slice(0,h), l=ds.slice(h); const ea=e.reduce((a,b)=>a+b.p,0)/e.length, la=l.reduce((a,b)=>a+b.p,0)/l.length; return la>ea+3; });
+      clsAwards=`<h2 style="margin-top:20px;font-size:18px">학급 상</h2>`
+        + `<div class="cls-award"><b>🌸 매화 만개상</b> <span class="sub">(학급 평균 ${bloomThresh}% 이상)</span><div style="margin-top:6px">${bloom.length?bloom.map(x=>x.c+" ("+x.avg+"%)").join(" · "):"해당 없음"}</div></div>`
+        + `<div class="cls-award" style="border-left-color:var(--plum)"><b>📈 함께 성장상</b> <span class="sub">(전반 대비 후반 평균 상승)</span><div style="margin-top:6px">${grow.length?grow.join(" · "):"해당 없음"}</div></div>`;
+    }
+  }catch(e){}
+
+  out.innerHTML=`<div class="sub" style="margin-top:14px">기간 ${f} ~ ${t} · 체크한 날 ${totalDays}일 · 참여 코드 ${codes.length}개</div>
+    <h2 style="margin-top:12px;font-size:18px">개인 상 (코드 명단 → 담임이 실명 확인)</h2>`
+    + awardBox("꾸준상", "체크한 날의 70% 이상("+CRIT_DAYS+"일↑) 참여한 어린이", steady)
+    + awardBox("폰 OFF 실천상", "폰 OFF를 "+CRIT_PHONE+"회 이상 실천한 어린이", phone)
+    + awardBox("성장상", "학기 후반에 참여가 늘어난 어린이", growth)
+    + clsAwards;
+}
+if(window.RAS&&RAS.banner)RAS.banner(document.getElementById("conn"));
+init();
+</script>
+<script>if(window.ROLES)ROLES.badge();</script>
+</body></html>

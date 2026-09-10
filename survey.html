@@ -15,6 +15,7 @@ h1{font-size:19px}select,input,textarea{font:inherit;border:1px solid var(--line
 <header><h1 id="title">매화 RAS 진단</h1><select id="lang" onchange="setLang(this.value)"><option value="ko">한국어</option><option value="en">English</option><option value="zh">中文</option><option value="vi">Tiếng Việt</option><option value="ru">Русский</option></select></header>
 <div id="conn" style="margin-top:10px"></div>
 <div id="app"></div>
+<script src="roles.js"></script>
 <script src="ras-config.js"></script>
 <script>
 const Q=[["교육과정","수업 시간에 독서·예술·스포츠 교육이 고르게 들어 있다","수업 시간에 책 읽기, 음악·미술, 운동을 골고루 해요","수업 시간에 독서·예술·스포츠 활동이 고르게 이루어진다"],
@@ -29,6 +30,12 @@ const Q=[["교육과정","수업 시간에 독서·예술·스포츠 교육이 �
 const SCALE={ko:["전혀","별로","보통","그런편","정말"],en:["No","Not really","So-so","Mostly","Yes"],zh:["完全不","不太","一般","比较是","非常"],vi:["Không","Ít","Bình thường","Khá","Rất"],ru:["Нет","Не очень","Средне","Скорее","Да"]};
 const FACES=["😞","🙁","😐","🙂","😄"];
 let lang="ko",role=null,rk=0,ans=Array(9).fill(0),sent=false;
+// 로그인 역할에 맞춰 설문 대상 자동 결정 (관문에서 이미 역할 선택함)
+(function(){
+  var map={teacher:["교사",0], student:["학생",1], parent:["학부모",2], admin:["교사",0]};
+  var r = (window.ROLES && ROLES.current) ? ROLES.current() : "";
+  if(map[r]){ role=map[r][0]; rk=map[r][1]; }
+})();
 function setLang(l){lang=l;render();}
 function render(){
   const app=document.getElementById("app");
@@ -41,7 +48,13 @@ function render(){
 }
 function pick(i,n){role=n;rk=i;render();}
 function setA(i,v){ans[i]=v;render();}
-function reset(){role=null;ans=Array(9).fill(0);sent=false;render();}
+function reset(){
+  ans=Array(9).fill(0); sent=false;
+  // 로그인 역할이 있으면 역할 유지(다시 대상 선택 안 함)
+  var r=(window.ROLES&&ROLES.current)?ROLES.current():"";
+  if(!(r==="teacher"||r==="student"||r==="parent"||r==="admin")) role=null;
+  render();
+}
 async function submit(){if(ans.filter(Boolean).length<9)return;
   const row={"시각":new Date().toLocaleString("ko-KR"),"대상":role,"언어":lang};Q.forEach((q,i)=>row["Q"+(i+1)]=ans[i]);row["자유응답"]="";
   await RAS.write("survey","append",row);sent=true;render();

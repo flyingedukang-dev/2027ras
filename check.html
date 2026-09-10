@@ -55,6 +55,11 @@ h1{font-size:22px}.sub{font-size:13px;color:var(--moss);margin-top:2px}
     <button class="chk" data-k="A" onclick="toggle('A',this)">아직이에요</button></div>
   <div class="card S"><div class="emoji">⚽</div><h3>S 오아시스 아침운동</h3><div class="desc">아침운동을 했어요</div>
     <button class="chk" data-k="S" onclick="toggle('S',this)">아직이에요</button></div>
+  <div class="card" style="border-color:var(--ink)"><div class="emoji">📵</div><h3>오늘의 폰 OFF</h3><div class="desc">오늘 폰 대신 책·운동·놀이를 더 했나요?</div>
+    <div style="display:flex;gap:8px">
+      <button class="chk pf" data-v="1" onclick="setPhone(true,this)" style="flex:1">네! 폰보다 RAS 👍</button>
+      <button class="chk pf" data-v="0" onclick="setPhone(false,this)" style="flex:1">아니요</button>
+    </div></div>
   <button class="save" id="save" onclick="save()">오늘 체크 저장</button>
   <div class="msg" id="savemsg"></div>
   <button class="change" onclick="location.reload()">다른 코드로 바꾸기</button>
@@ -68,7 +73,7 @@ h1{font-size:22px}.sub{font-size:13px;color:var(--moss);margin-top:2px}
 </section>
 
 <script>
-let cls="", code="", val={R:false,A:false,S:false};
+let cls="", code="", val={R:false,A:false,S:false}; let phoneOff=null;
 // 주소에 ?prefill=3-1-05 가 있으면 코드 칸에 미리 넣기
 (function(){ var p=new URLSearchParams(location.search).get("prefill"); if(p){ window.addEventListener("DOMContentLoaded",function(){ var el=document.getElementById("code"); if(el) el.value=p; }); } })();
 const today=new Date().toISOString().slice(0,10);
@@ -101,13 +106,15 @@ async function loadMine(){
     if(mine.length){
       const last=mine[mine.length-1];
       val={R:Number(last["R"])>0, A:Number(last["A"])>0, S:Number(last["S"])>0};
-      document.querySelectorAll(".chk").forEach(b=>{ const k=b.dataset.k; setBtn(b,val[k]); });
+      document.querySelectorAll(".chk[data-k]").forEach(b=>{ const k=b.dataset.k; setBtn(b,val[k]); });
+      if(last["폰프리"]!=null && String(last["폰프리"])!==""){ const pv=Number(last["폰프리"])>0; const pb=document.querySelector('.pf[data-v="'+(pv?1:0)+'"]'); if(pb) setPhone(pv,pb); }
       document.getElementById("savemsg").textContent="오늘 이미 체크했어요. 고쳐서 다시 저장할 수 있어요.";
     }
   }catch(e){}
 }
 function setBtn(b,on){ b.classList.toggle("on",on); b.textContent=on?"했어요! ✓":"아직이에요"; }
 function toggle(k,b){ val[k]=!val[k]; setBtn(b,val[k]); }
+function setPhone(v,b){ phoneOff=v; document.querySelectorAll(".pf").forEach(x=>{x.classList.remove("on");x.style.background="";x.style.color="";x.style.borderColor="";}); b.classList.add("on"); b.style.background=v?"#3E6B5E":"#B8432F"; b.style.color="#fff"; b.style.borderColor=v?"#3E6B5E":"#B8432F"; }
 
 async function save(){
   if(!RAS.conf().url){ document.getElementById("savemsg").textContent="학교 연결이 필요해요. 선생님께 알려 주세요."; return; }
@@ -115,7 +122,7 @@ async function save(){
   try{
     const c=RAS.conf();
     const r=await fetch(c.url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},
-      body:JSON.stringify({key:c.key,tab:"checks",action:"studentCheck",date:today,cls:cls,code:code,R:val.R,A:val.A,S:val.S})});
+      body:JSON.stringify({key:c.key,tab:"checks",action:"studentCheck",date:today,cls:cls,code:code,R:val.R,A:val.A,S:val.S,phoneOff:phoneOff===true})});
     const d=await r.json();
     if(d.error) throw new Error(d.error);
     const n=(val.R?1:0)+(val.A?1:0)+(val.S?1:0);

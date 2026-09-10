@@ -54,7 +54,7 @@ const COL={R:"#3E6B5E",A:"#C9527A",S:"#3D7EA6"},NAME={R:"독서",A:"예술문화
 let trendChart=null;
 
 function num(v){ if(v==null) return 0; if(typeof v==="number") return v; var n=parseFloat(String(v).replace(/[^0-9.\-]/g,"")); return isNaN(n)?0:n; }
-function pctRow(r){ const t=num(r["정원"])||1; return {R:Math.round(num(r["R"])/t*100),A:Math.round(num(r["A"])/t*100),S:Math.round(num(r["S"])/t*100)}; }
+function pctRow(r){ const t=num(r["정원"])||1; return {R:Math.round(num(r["R"])/t*100),A:Math.round(num(r["A"])/t*100),S:Math.round(num(r["S"])/t*100),P:Math.round(num(r["폰프리"])/t*100)}; }
 // 주(월요일) 키
 function _ymd(d){
   if(d==null) return "";
@@ -80,8 +80,8 @@ function aggregate(rows){
   const byWeek={};
   rows.forEach(r=>{ if(!r["날짜"])return; const w=weekKey(r["날짜"]); (byWeek[w]=byWeek[w]||[]).push(r); });
   const weeks=Object.keys(byWeek).sort();
-  const perWeekClass=(w)=>{ const m={}; (byWeek[w]||[]).forEach(r=>{ const p=pctRow(r); const c=String(r["학급"]).trim(); if(!m[c])m[c]={R:[],A:[],S:[],student:0}; m[c].R.push(p.R);m[c].A.push(p.A);m[c].S.push(p.S); if(r["학생기획"]==="Y")m[c].student++; });
-    const out={}; CLASSES.forEach(c=>{ const x=m[c]; out[c]=x?{R:avg(x.R),A:avg(x.A),S:avg(x.S),student:x.student}:{R:0,A:0,S:0,student:0}; }); return out; };
+  const perWeekClass=(w)=>{ const m={}; (byWeek[w]||[]).forEach(r=>{ const p=pctRow(r); const c=String(r["학급"]).trim(); if(!m[c])m[c]={R:[],A:[],S:[],P:[],student:0}; m[c].R.push(p.R);m[c].A.push(p.A);m[c].S.push(p.S);m[c].P.push(p.P); if(r["학생기획"]==="Y")m[c].student++; });
+    const out={}; CLASSES.forEach(c=>{ const x=m[c]; out[c]=x?{R:avg(x.R),A:avg(x.A),S:avg(x.S),P:avg(x.P||[]),student:x.student}:{R:0,A:0,S:0,P:0,student:0}; }); return out; };
   return { weeks, perWeekClass, byWeek };
 }
 const avg=a=>a.length?Math.round(a.reduce((x,y)=>x+y,0)/a.length):0;
@@ -102,6 +102,7 @@ async function load(){
    <div class="sub" style="margin-top:12px">기준 주: ${curW} 주간 (입력 ${weeks.length}주 누적)</div>
    <div class="sum">
     ${["R","A","S"].map(k=>`<div style="border-left:6px solid ${COL[k]}"><div class="l">${k} ${NAME[k]}</div><div class="n">${schoolAvg(k)}<span style="font-size:14px">%</span></div></div>`).join("")}
+    <div style="border-left:6px solid var(--ink)"><div class="l">📵 폰 OFF 실천율</div><div class="n">${schoolAvg("P")}<span style="font-size:14px">%</span></div></div>
     <div style="border-left:6px solid var(--ink)"><div class="l">다꿈누리 격차</div><div class="n">${dakkumGap}<span style="font-size:14px">%p</span></div></div>
    </div>
    ${lows.length?`<div class="warnbox"><b style="color:var(--warn)">확인이 필요한 학급</b> ${lows.map(c=>`${c}(${["R","A","S"].filter(k=>cur[c][k]>0&&cur[c][k]<70).map(k=>NAME[k]).join(",")})`).join(" · ")}</div>`:`<div class="warnbox" style="background:#EEF4F1;border-color:var(--moss)">모든 학급이 70% 이상입니다.</div>`}

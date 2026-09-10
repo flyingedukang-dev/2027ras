@@ -85,6 +85,7 @@
   <section id="ras">
     <h2>R · A · S 이번 주</h2>
     <p class="lead">우리 학교 전체의 이번 주 참여율이에요. <span id="weekLabel"></span></p>
+    <p style="font-size:15px;margin:0 0 12px"><b>📵 폰 OFF 실천율</b> <b id="pctP" style="color:var(--ink)">–</b>% — 학생들이 폰 대신 RAS를 택한 비율이에요.</p>
     <div class="grid3">
       <div class="card R"><h3>R 독서</h3><div class="stat"><span id="pctR">–</span><small>% 참여</small></div>
         <ul><li>학급별 아침독서 현황판</li><li>이중언어 독서기록 갤러리</li><li>도서관 개방 시간 · 북콘서트</li></ul></div>
@@ -160,6 +161,7 @@
         function pct(k){ var v=rows.map(function(r){ var t=parseFloat(String(r["정원"]).replace(/[^0-9.]/g,""))||0; var x=parseFloat(String(r[k]).replace(/[^0-9.]/g,""))||0; return t? Math.round(x/t*100):0; }); return avg(v); }
         var eR=document.getElementById("pctR"), eA=document.getElementById("pctA"), eS=document.getElementById("pctS");
         if(eR)eR.textContent=pct("R"); if(eA)eA.textContent=pct("A"); if(eS)eS.textContent=pct("S");
+        var eP=document.getElementById("pctP"); if(eP){ var pv=rows.map(function(r){var t=parseFloat(String(r["정원"]).replace(/[^0-9.]/g,""))||0;var x=parseFloat(String(r["폰프리"]).replace(/[^0-9.]/g,""))||0;return t?Math.round(x/t*100):0;}); eP.textContent=avg(pv); }
         var wl=document.getElementById("weekLabel"); if(wl&&last) wl.textContent="(기준 주 "+last+")";
       }
     }catch(e){}
