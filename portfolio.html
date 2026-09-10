@@ -48,6 +48,12 @@ function showConn(){ const c=RAS.conf(); const el=document.getElementById("conn"
 // ?prefill=3-1-05 지원 (담임이 가정에 준 주소)
 (function(){ var p=new URLSearchParams(location.search).get("prefill"); if(p){ window.addEventListener("DOMContentLoaded",function(){ var el=document.getElementById("code"); if(el)el.value=p; }); } })();
 
+function normCode(v){
+  var m=String(v).replace(/^.'/,"").replace(/^'/,"").trim().match(/(\d+)\D+(\d+)\D+(\d+)/);
+  if(!m) return String(v).trim();
+  return parseInt(m[1],10)+"-"+parseInt(m[2],10)+"-"+parseInt(m[3],10); // 앞의 0 제거해 통일
+}
+
 async function load(){
   const v=document.getElementById("code").value.trim();
   const m=v.match(/^(\d+)-(\d+)-(\d+)$/);
@@ -56,7 +62,8 @@ async function load(){
   code=v;
   document.getElementById("codemsg").textContent="불러오는 중…";
   try{
-    const rows=(await RAS.read("checks")).filter(r=>String(r["코드"]).trim()===code);
+    const target=normCode(code);
+    const rows=(await RAS.read("checks")).filter(r=>normCode(r["코드"])===target);
     render(m, rows);
   }catch(e){ document.getElementById("codemsg").textContent="불러오지 못했어요. 다시 시도해 주세요."; }
 }

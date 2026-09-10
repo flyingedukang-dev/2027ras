@@ -44,6 +44,7 @@ async function init(){
 }
 function inRange(d,f,t){ const s=String(d).slice(0,10); return (!f||s>=f)&&(!t||s<=t); }
 
+function normCode(v){var m=String(v).replace(/^.'/,"").replace(/^'/,"").trim().match(/(\d+)\D+(\d+)\D+(\d+)/);if(!m)return String(v).trim();return parseInt(m[1],10)+"-"+parseInt(m[2],10)+"-"+parseInt(m[3],10);}
 async function run(){
   const out=document.getElementById("out"); out.innerHTML='<p class="sub">집계 중…</p>';
   const f=document.getElementById("from").value, t=document.getElementById("to").value;
@@ -56,7 +57,7 @@ async function run(){
   // 코드별 집계
   const byCode={};
   checks.forEach(r=>{
-    const c=String(r["코드"]).trim(); if(!c)return;
+    const c=normCode(r["코드"]); if(!c)return;
     if(!byCode[c])byCode[c]={days:new Set(),R:0,A:0,S:0,P:0,first:null,last:null,dates:[]};
     const day=String(r["날짜"]).slice(0,10);
     byCode[c].days.add(day);

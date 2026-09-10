@@ -50,8 +50,7 @@ function render(){
   const base=document.getElementById("base").value.trim();
   let h="";
   for(let i=1;i<=cap;i++){
-    const num=String(i).padStart(2,"0");
-    const code=cls+"-"+num;
+    const code=cls+"-"+i;  // 앞의 0 없이 (학생 입력과 통일)
     const url= base ? base+"?prefill="+encodeURIComponent(code) : "";
     h+=`<div class="code"><div class="n">${code}</div>${url?`<div class="u">${url}</div>`:""}</div>`;
   }

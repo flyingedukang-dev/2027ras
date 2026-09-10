@@ -86,12 +86,18 @@ function showConn(){
   return true;
 }
 
+function normCode(v){
+  var m=String(v).replace(/^.'/,"").replace(/^'/,"").trim().match(/(\d+)\D+(\d+)\D+(\d+)/);
+  if(!m) return String(v).trim();
+  return parseInt(m[1],10)+"-"+parseInt(m[2],10)+"-"+parseInt(m[3],10); // 앞의 0 제거해 통일
+}
+
 function enter(){
   const v=document.getElementById("code").value.trim();
   // 형식: 학년-반-번호 (예: 3-1-05) → 학급은 앞 두 조각
   const m=v.match(/^(\d+)-(\d+)-(\d+)$/);
   if(!m){ document.getElementById("codemsg").textContent="코드를 3-1-05 처럼 넣어 주세요."; return; }
-  code=v; cls=m[1]+"-"+m[2];
+  code=normCode(v); cls=parseInt(m[1],10)+"-"+parseInt(m[2],10);
   document.getElementById("hi").textContent=cls+"반 "+m[3]+"번, 오늘 한 것을 눌러 주세요";
   document.getElementById("codeStep").style.display="none";
   document.getElementById("checkStep").style.display="block";
@@ -102,7 +108,7 @@ function enter(){
 async function loadMine(){
   try{
     const rows=await RAS.read("checks");
-    const mine=rows.filter(r=>String(r["날짜"])===today && String(r["코드"]).trim()===code);
+    const mine=rows.filter(r=>String(r["날짜"])===today && normCode(r["코드"])===code);
     if(mine.length){
       const last=mine[mine.length-1];
       val={R:Number(last["R"])>0, A:Number(last["A"])>0, S:Number(last["S"])>0};
